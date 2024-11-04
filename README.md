@@ -47,14 +47,23 @@ Here's the commit template:
 
 #<50-character summary line>
 #Blank line
+
 #Detailed description of the change:
+
+
 #-What is the change?
+
 #-Why was is made?
+
 #- Any context or relevant information
 
+
 #References:
+
 #-Issue #123
+
 #-PR #456
+
 #-Task KAN-20
 
 
@@ -86,9 +95,13 @@ Here's a template for keeping clear and concise pull requests:
 
 ##Checklist: 
 - Include a checklist to confirm basic tasks are complete, such as:
+
 -[ ] Code compiles correctly
+
 -[ ] Tests have been added/updated
+
 -[ ] Documentation has been updated (if needed)
+
 -[ ] Branch is up-to-date with the main branch
 
 
