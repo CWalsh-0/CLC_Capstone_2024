@@ -4,12 +4,25 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // new
 import 'app_state.dart'; // new
 import 'homepage.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+// Home Assistant Imports
+import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant/src/models/configuration.dart';
+import 'package:home_assistant/src/models/entity.dart';
+import 'package:home_assistant/src/models/service.dart';
 
 void main() {
+  //Home Assistant Inits
+  const String token =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkNDE2YzE2Mjk3NTM0ZTg2YjVlZGQ0MTgwODMxYTRhMCIsImlhdCI6MTczMTE4ODA3NywiZXhwIjoyMDQ2NTQ4MDc3fQ.acPeiPnVWo9eZljFRFlRUEj81QnEbsP6nxLAyJxKTyc';
+  const String localURL = 'http://homeassistant.local:8123';
+  final HomeAssistant homeAssistant = HomeAssistant(
+      baseUrl: 'http://homeassistant.local:8123', bearerToken: token);
+  fetchData(homeAssistant);
+
   WidgetsFlutterBinding.ensureInitialized();
   //Provider: ChangeNotifierProvider is responsible for init the app state & for state management
   runApp(ChangeNotifierProvider(
@@ -18,6 +31,26 @@ void main() {
     //call back interface to parent widget to return a child of that widget i.e ChangeNotifierProvider
     builder: ((context, child) => const MyApp()),
   ));
+}
+
+fetchData(HomeAssistant homeAssistant) async {
+  print("The API is working: ${await homeAssistant.verifyApiIsWorking()}");
+
+  final Configuration config = await homeAssistant.fetchConfig();
+  print(config.toJson());
+
+  final List<Entity> entities = await homeAssistant.fetchStates();
+  print(entities.first.entityId);
+
+  final Entity entity = await homeAssistant.fetchState(entities.first.entityId);
+  print(entity.entityId);
+
+  final List<Service> services = await homeAssistant.fetchServices();
+  print(services.first.domain);
+
+  //Dummy Services
+  homeAssistant.executeService("sensor.sun_next_rising", "turn_on",
+      additionalActions: {});
 }
 
 class MyApp extends StatelessWidget {
