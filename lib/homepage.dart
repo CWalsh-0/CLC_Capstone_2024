@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' // new
     hide
         EmailAuthProvider,
@@ -9,6 +10,8 @@ import 'app_state.dart'; // new
 import 'guest_book.dart';
 import 'src/authentication.dart'; // new
 import 'src/widgets.dart';
+
+FirebaseFirestore db = FirebaseFirestore.instance;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

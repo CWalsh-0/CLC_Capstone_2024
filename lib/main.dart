@@ -13,14 +13,14 @@ import 'package:home_assistant/home_assistant.dart';
 import 'package:home_assistant/src/models/configuration.dart';
 import 'package:home_assistant/src/models/entity.dart';
 import 'package:home_assistant/src/models/service.dart';
+import 'src/home_assistant_config.dart'; // new
 
 void main() {
+  print("I'M ALIVE");
   //Home Assistant Inits
-  const String token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkNDE2YzE2Mjk3NTM0ZTg2YjVlZGQ0MTgwODMxYTRhMCIsImlhdCI6MTczMTE4ODA3NywiZXhwIjoyMDQ2NTQ4MDc3fQ.acPeiPnVWo9eZljFRFlRUEj81QnEbsP6nxLAyJxKTyc';
-  const String localURL = 'http://homeassistant.local:8123';
   final HomeAssistant homeAssistant = HomeAssistant(
-      baseUrl: 'http://homeassistant.local:8123', bearerToken: token);
+      baseUrl: HomeAssistantConfig.baseUrl,
+      bearerToken: HomeAssistantConfig.token);
   fetchData(homeAssistant);
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,21 +36,26 @@ void main() {
 fetchData(HomeAssistant homeAssistant) async {
   print("The API is working: ${await homeAssistant.verifyApiIsWorking()}");
 
-  final Configuration config = await homeAssistant.fetchConfig();
-  print(config.toJson());
+  //final Configuration config = await homeAssistant.fetchConfig();
+  //print(config.toJson());
 
-  final List<Entity> entities = await homeAssistant.fetchStates();
-  print(entities.first.entityId);
+  //final List<Entity> entities = await homeAssistant.fetchStates();
+  //print(entities.);
 
-  final Entity entity = await homeAssistant.fetchState(entities.first.entityId);
-  print(entity.entityId);
+  final Entity entity =
+      await homeAssistant.fetchState("light.esphome_web_60beb8_test_light");
+  print(entity.attributes.brightness);
 
-  final List<Service> services = await homeAssistant.fetchServices();
-  print(services.first.domain);
+  //final List<Service> services = await homeAssistant.fetchServices();
+  //print(services.first.domain);
 
   //Dummy Services
-  homeAssistant.executeService("sensor.sun_next_rising", "turn_on",
-      additionalActions: {});
+  homeAssistant.executeService("light.esphome_web_60beb8_test_light", "turn_on",
+      additionalActions: {
+        "brightness": 50,
+      });
+
+  await Future.delayed(Duration(seconds: 1));
 }
 
 class MyApp extends StatelessWidget {
@@ -157,4 +162,3 @@ final _router = GoRouter(
   ],
 );
 // end of GoRouter configuration
-
