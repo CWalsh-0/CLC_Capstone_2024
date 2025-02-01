@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' // new
         EmailAuthProvider,
         PhoneAuthProvider; // new
 import 'package:flutter/material.dart'; // new
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart'; // new
 
 import 'app_state.dart'; // new
@@ -62,6 +63,11 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              ElevatedButton(
+                  onPressed: () {
+                    context.push('/scheduling/doc_id_random');
+                  },
+                  child: const Text("Go to Scheduling")),
               Consumer<ApplicationState>(
                 builder: (context, appState, _) => AuthFunc(
                     loggedIn: appState.loggedIn,
