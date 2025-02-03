@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -51,7 +49,8 @@ class SignupScreen extends StatelessWidget {
                   SizedBox(height: 16),
                   _buildTextField('Password', 'Enter your password', true),
                   SizedBox(height: 16),
-                  _buildTextField('Confirm Password', 'Confirm your password', true),
+                  _buildTextField(
+                      'Confirm Password', 'Confirm your password', true),
                   SizedBox(height: 30),
                   Center(
                     child: ElevatedButton(
@@ -62,7 +61,8 @@ class SignupScreen extends StatelessWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 50),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 12, horizontal: 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -123,7 +123,8 @@ class SignupScreen extends StatelessWidget {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                         side: BorderSide(color: Colors.grey),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),

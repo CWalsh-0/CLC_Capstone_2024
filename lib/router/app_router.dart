@@ -1,5 +1,6 @@
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutterdb/login_page.dart';
+import 'package:flutterdb/signup_page.dart';
 import 'package:go_router/go_router.dart';
 import '../homepage.dart';
 import '../SchedulingLandingScreen.dart';
@@ -9,62 +10,42 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const MyHomePage(title: "Home"),
-      routes: [_signInRoute, _profileRoute, schedulingLandingRoute()],
+      routes: [
+        _signInRoute,
+        _signUpRoute,
+        _profileRoute,
+        _forgotPassword,
+        schedulingLandingRoute()
+      ],
     ),
   ],
 );
 
 final GoRoute _signInRoute = GoRoute(
     path: 'sign-in',
-    builder: (context, state) {
-      return SignInScreen(
-        //actions available
-        actions: [
-          ForgotPasswordAction(((context, email) {
-            final uri = Uri(
-              path: '/sign-in/forgot-password',
-              queryParameters: <String, String?>{
-                'email': email,
-              },
-            );
-            context.push(uri.toString());
-          })),
-          AuthStateChangeAction(((context, state) {
-            final user = switch (state) {
-              SignedIn state => state.user,
-              UserCreated state => state.credential.user,
-              _ => null
-            };
-            if (user == null) {
-              return;
-            }
-            if (state is UserCreated) {
-              user.updateDisplayName(user.email!.split('@')[0]);
-            }
-            if (!user.emailVerified) {
-              user.sendEmailVerification();
-              const snackBar = SnackBar(
-                  content: Text(
-                      'Please check your email to verify your email address'));
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            }
-            context.pushReplacement('/');
-          })),
-        ],
-      );
-    },
+    builder: (context, state) => const LoginPage(),
     routes: [
       GoRoute(
         path: 'forgot-password',
         builder: (context, state) {
-          final arguments = state.uri.queryParameters;
           return ForgotPasswordScreen(
-            email: arguments['email'],
             headerMaxExtent: 200,
           );
         },
       ),
     ]);
+
+final GoRoute _signUpRoute =
+    GoRoute(path: 'sign-up', builder: (context, state) => SignupScreen());
+
+final GoRoute _forgotPassword = GoRoute(
+  path: 'forgot-password',
+  builder: (context, state) {
+    return ForgotPasswordScreen(
+      headerMaxExtent: 200,
+    );
+  },
+);
 
 // 🔹 Profile Route
 final GoRoute _profileRoute = GoRoute(
