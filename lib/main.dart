@@ -1,4 +1,9 @@
 //import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:flutterdb/homepage.dart';
+import 'package:flutterdb/login_page.dart';
+import 'package:flutterdb/signup_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // new
 import 'app_state.dart'; // new
@@ -76,7 +81,7 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: true,
       ),
-      routerConfig: appRouter, // new
+      routerConfig: _router, // new
     );
   }
 }
