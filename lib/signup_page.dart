@@ -1,8 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutterdb/firestore/firestore_stream.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SignupScreen extends StatelessWidget {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+  final FirestoreService firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
@@ -41,22 +52,44 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 30),
-                  _buildTextField('First Name', 'Enter your first name', false),
+                  _buildTextField('First Name', 'Enter your first name', false,
+                      firstNameController),
                   SizedBox(height: 16),
-                  _buildTextField('Last Name', 'Enter your last name', false),
+                  _buildTextField('Last Name', 'Enter your last name', false,
+                      lastNameController),
                   SizedBox(height: 16),
-                  _buildTextField('Email', 'Enter your email address', false),
+                  _buildTextField('Email', 'Enter your email address', false,
+                      emailController),
                   SizedBox(height: 16),
-                  _buildTextField('Password', 'Enter your password', true),
+                  _buildTextField('Password', 'Enter your password', true,
+                      passwordController),
                   SizedBox(height: 16),
-                  _buildTextField(
-                      'Confirm Password', 'Confirm your password', true),
+                  _buildTextField('Confirm Password', 'Confirm your password',
+                      true, confirmPasswordController),
                   SizedBox(height: 30),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Handle sign-up action
+                      onPressed: () async {
+                        try {
+                          await FirebaseAuth.instance
+                              .createUserWithEmailAndPassword(
+                            email: emailController.text,
+                            password: passwordController.text,
+                          );
+                          await firestoreService.saveUserToFirestore(
+                              firstNameController.text,
+                              lastNameController.text);
+                          if (context.mounted) {
+                            context.go('/');
+                          }
+                        } on FirebaseAuthException catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            //needs a validator
+                            SnackBar(
+                              content:
+                                  Text(e.message ?? 'Authentication failed'),
+                            ),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -141,7 +174,8 @@ class SignupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, bool isPassword) {
+  Widget _buildTextField(String label, String hintText, bool isPassword,
+      TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,6 +185,7 @@ class SignupScreen extends StatelessWidget {
         ),
         SizedBox(height: 8),
         TextFormField(
+          controller: controller,
           obscureText: isPassword,
           decoration: InputDecoration(
             hintText: hintText,
