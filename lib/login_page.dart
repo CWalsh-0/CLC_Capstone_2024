@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,  // Add white background
+      backgroundColor: Colors.white, // Add white background
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),  // Reduced top spacing
+                const SizedBox(height: 20), // Reduced top spacing
                 // Logo and FlexiDesk text in a row
                 Row(
                   children: [
@@ -38,9 +38,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(width: 20),
                     Padding(
-                      padding: const EdgeInsets.only(top:125),
+                      padding: const EdgeInsets.only(top: 125),
                       child: Center(
-                      child: Text(
+                        child: Text(
                           'FlexiDesk',
                           style: GoogleFonts.allura(
                             fontSize: 50,
@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 25),  // Add space after logo
+                const SizedBox(height: 25), // Add space after logo
 
                 const SizedBox(height: 0),
                 // Welcome Text
@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Please enter your login details below',
                   style: GoogleFonts.baloo2(
                     fontSize: 12,
-                    color:  Colors.grey,
+                    color: Colors.grey,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -220,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),  // Reduced spacing
+                const SizedBox(height: 8), // Reduced spacing
                 // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -230,8 +230,6 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         context.push('/sign-up');
                       },
-
-                      
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(

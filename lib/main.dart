@@ -9,7 +9,7 @@ import 'router/app_router.dart'; // Import your new router file
 void main() {
   print("I'M ALIVE");
   //Moved Home Assistant Inits to ha_start.dart
-  fetchData(homeAssistant);
+  //fetchData(homeAssistant);
   WidgetsFlutterBinding.ensureInitialized();
   //Provider: ChangeNotifierProvider is responsible for init the app state & for state management
   runApp(ChangeNotifierProvider(

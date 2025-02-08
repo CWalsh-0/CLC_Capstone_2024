@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -24,5 +25,24 @@ class FirestoreService {
         .collection('homeassistant')
         .doc(documentId)
         .update({'status': newStatus});
+  }
+
+  Future<void> saveUserToFirestore(String firstName, String lastName) async {
+    User? user = FirebaseAuth.instance.currentUser; // Get current user
+    if (user != null) {
+      DocumentReference userRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      await userRef.set(
+          {
+            'uid': user.uid,
+            'email': user.email,
+            'firstName': firstName,
+            'lastName': lastName,
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(
+              merge: true)); // merge: true avoids overwriting existing fields
+    }
   }
 }
