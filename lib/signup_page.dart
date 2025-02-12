@@ -11,162 +11,179 @@ class SignupScreen extends StatelessWidget {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final FirestoreService firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 40),
-                  Center(
-                    child: Text(
-                      'Welcome to Flexidesk',
-                      style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 10), // Reduced from 20
+                // Logo and FlexiDesk text in a row
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/flexidesk_logo.png',
+                      height: 60, // Reduced from 80
+                      width: 60, // Reduced from 80
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  Center(
-                    child: Text(
-                      'Sign up to get started',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  _buildTextField('First Name', 'Enter your first name', false,
-                      firstNameController),
-                  SizedBox(height: 16),
-                  _buildTextField('Last Name', 'Enter your last name', false,
-                      lastNameController),
-                  SizedBox(height: 16),
-                  _buildTextField('Email', 'Enter your email address', false,
-                      emailController),
-                  SizedBox(height: 16),
-                  _buildTextField('Password', 'Enter your password', true,
-                      passwordController),
-                  SizedBox(height: 16),
-                  _buildTextField('Confirm Password', 'Confirm your password',
-                      true, confirmPasswordController),
-                  SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          await FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                            email: emailController.text,
-                            password: passwordController.text,
-                          );
-                          await firestoreService.saveUserToFirestore(
-                              firstNameController.text,
-                              lastNameController.text);
-                          if (context.mounted) {
-                            context.go('/');
-                          }
-                        } on FirebaseAuthException catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            //needs a validator
-                            SnackBar(
-                              content:
-                                  Text(e.message ?? 'Authentication failed'),
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Register',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        // Navigate to login page
-                      },
-                      child: Text(
-                        'Already have an account? Log In',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    const SizedBox(width: 15), // Reduced from 20
+                    Padding(
+                      padding: const EdgeInsets.only(top: 95), // Reduced from 125
+                      child: Center(
                         child: Text(
-                          'OR',
-                          style: GoogleFonts.poppins(color: Colors.grey),
+                          'FlexiDesk',
+                          style: GoogleFonts.allura(
+                            fontSize: 40, // Reduced from 50
+                            color: const Color(0xFF1A47B8),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5), // Reduced from 25
+                
+                // Sign Up Text
+                Text(
+                  'SIGN UP',
+                  style: GoogleFonts.baloo2(
+                    fontSize: 24, // Reduced from 30
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2), // Reduced from 5
+                Text(
+                  'Please enter your details below',
+                  style: GoogleFonts.baloo2(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 5), // Reduced from 22
+
+                // Form Fields with reduced spacing
+                _buildInputField('First Name', 'Enter your first name', false, firstNameController),
+                const SizedBox(height: 5), // Reduced from 24
+                _buildInputField('Last Name', 'Enter your last name', false, lastNameController),
+                const SizedBox(height: 5),
+                _buildInputField('Email', 'Enter your email', false, emailController),
+                const SizedBox(height: 5),
+                _buildInputField('Password', 'Enter your password', true, passwordController),
+                const SizedBox(height: 5),
+                _buildInputField('Confirm Password', 'Confirm your password', true, confirmPasswordController),
+                const SizedBox(height: 20),
+
+                // Register Button
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      try {
+                        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                          email: emailController.text,
+                          password: passwordController.text,
+                        );
+                        await firestoreService.saveUserToFirestore(
+                          firstNameController.text,
+                          lastNameController.text,
+                        );
+                        if (context.mounted) {
+                          context.go('/');
+                        }
+                      } on FirebaseAuthException catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.message ?? 'Authentication failed')),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A47B8),
+                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 16
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10), // Reduced from 24
+                
+                // Or Divider
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Or', style: TextStyle(color: Colors.grey)),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: 5), // Reduced from 24
+
+                // Microsoft Sign Up Button
+                OutlinedButton(
+                  onPressed: () {
+                    // Implement Microsoft sign up
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 16
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/microsoft_logo.png',
+                        height: 20, // Reduced from 24
+                        width: 20, // Reduced from 24
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Sign up with Microsoft'),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // Handle sign up with Microsoft action
-                      },
-                      icon: Image.asset(
-                        'assets/images/microsoft_logo.png',
-                        height: 20,
-                      ),
-                      label: Text(
-                        'Sign up with Microsoft',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                        side: BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                ),
+
+                const SizedBox(height: 8),
+                
+                // Login Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Already have an account?'),
+                    TextButton(
+                      onPressed: () => context.push('/sign-in'),
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(
+                          color: Color(0xFF1A47B8),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -174,30 +191,39 @@ class SignupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, bool isPassword,
-      TextEditingController controller) {
+  Widget _buildInputField(String label, String hint, bool isPassword, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 6), // Reduced from 8
         TextFormField(
           controller: controller,
           obscureText: isPassword,
           decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: GoogleFonts.poppins(color: Colors.grey),
+            hintText: hint,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // Reduced padding
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter $label';
+              return 'Please enter your $label';
+            }
+            if (isPassword && value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            if (label == 'Email' && !value.contains('@')) {
+              return 'Please enter a valid email';
+            }
+            if (label == 'Confirm Password' && value != passwordController.text) {
+              return 'Passwords do not match';
             }
             return null;
           },
@@ -206,3 +232,4 @@ class SignupScreen extends StatelessWidget {
     );
   }
 }
+
