@@ -65,9 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               ElevatedButton(
                   onPressed: () {
-                    context.push('/scheduling/doc_id_random');
+                    context.push('/scheduling/spaces');
                   },
                   child: const Text("Go to Scheduling")),
+              ElevatedButton(
+                  onPressed: () {
+                    context.push('/algorithm');
+                  },
+                  child: const Text("Go to Algorithm Testing")),
               Consumer<ApplicationState>(
                 builder: (context, appState, _) => AuthFunc(
                     loggedIn: appState.loggedIn,
