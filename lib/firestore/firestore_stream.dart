@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Function to get a Firestore stream for the default HA collection
+  // Function to get a Firestore stream for a specific room
   Stream<DocumentSnapshot> getDocumentStream(String documentId) {
-    return _db.collection('homeassistant').doc(documentId).snapshots();
+    return _db.collection('spaces').doc(documentId).snapshots();
   }
 
   // Function to get a Firestore stream for the default HA collection
@@ -21,10 +21,7 @@ class FirestoreService {
   }
 
   void updateStreamStatus(String documentId, String newStatus) {
-    _db
-        .collection('homeassistant')
-        .doc(documentId)
-        .update({'status': newStatus});
+    _db.collection('spaces').doc(documentId).update({'status': newStatus});
   }
 
   Future<void> saveUserToFirestore(String firstName, String lastName) async {
