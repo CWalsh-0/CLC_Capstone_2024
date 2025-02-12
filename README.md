@@ -2,12 +2,10 @@
 
 Github Repository for the Command Line Crusaders' 2024 Capstone Project
 
-Here's a guide on how to add this repository to your Visual Studio Code IDE:https://www.techrepublic.com/article/add-github-vs-code/
-
-Note: This guide directs you to download the extension "GitHub Pull Requests and Issues." This extension has since been renamed to "GitHub Pull Requests."
+# Algorithm Repo
+[Link to the respository.](https://github.com/bananaslamjamma/algorithm_main)
 
 # Firebase
-
 [Link to Firebase project.](https://console.firebase.google.com/u/0/project/keyfob-pj/firestore/databases/-default-/data)
 
 ## Getting Started

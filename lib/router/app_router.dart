@@ -1,4 +1,5 @@
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:flutterdb/BookingForm.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutterdb/forgot_password_page.dart';
 import 'package:flutterdb/login_page.dart';
@@ -14,9 +15,9 @@ final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (BuildContext context, GoRouterState state) {
     final user = FirebaseAuth.instance.currentUser;
-    final isOnAuthPage = state.matchedLocation == '/sign-in' || 
-                         state.matchedLocation == '/sign-up' || 
-                         state.matchedLocation == '/forgot-password';
+    final isOnAuthPage = state.matchedLocation == '/sign-in' ||
+        state.matchedLocation == '/sign-up' ||
+        state.matchedLocation == '/forgot-password';
 
     if (user == null && !isOnAuthPage) return '/sign-in';
     if (user != null && isOnAuthPage) return '/';
@@ -65,6 +66,7 @@ final appRouter = GoRouter(
         return SchedulingLandingScreen(documentId: id);
       },
     ),
+    GoRoute(path: 'algorithm', builder: (context, state) => BookingPage())
   ],
 );
 

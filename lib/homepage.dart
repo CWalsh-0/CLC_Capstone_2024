@@ -58,7 +58,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
+                  padding:
+                      const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -95,7 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         itemBuilder: (BuildContext context) => [
                           PopupMenuItem(
                             child: ListTile(
-                              leading: const Icon(Icons.person, color: Color(0xFF1A47B8)),
+                              leading: const Icon(Icons.person,
+                                  color: Color(0xFF1A47B8)),
                               title: Text(
                                 'Profile',
                                 style: GoogleFonts.poppins(),
@@ -106,7 +108,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           PopupMenuItem(
                             child: ListTile(
-                              leading: const Icon(Icons.settings, color: Color(0xFF1A47B8)),
+                              leading: const Icon(Icons.settings,
+                                  color: Color(0xFF1A47B8)),
                               title: Text(
                                 'Settings',
                                 style: GoogleFonts.poppins(),
@@ -117,7 +120,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           PopupMenuItem(
                             child: ListTile(
-                              leading: const Icon(Icons.logout, color: Color(0xFF1A47B8)),
+                              leading: const Icon(Icons.logout,
+                                  color: Color(0xFF1A47B8)),
                               title: Text(
                                 'Logout',
                                 style: GoogleFonts.poppins(),
@@ -147,7 +151,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 8.0),
                           child: Text(
                             'CALENDAR',
                             style: GoogleFonts.baloo2(
@@ -158,8 +163,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         ),
                         TableCalendar(
-                          firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                          lastDay: DateTime.now().add(const Duration(days: 365)),
+                          firstDay: DateTime.now()
+                              .subtract(const Duration(days: 365)),
+                          lastDay:
+                              DateTime.now().add(const Duration(days: 365)),
                           focusedDay: _focusedDay,
                           calendarFormat: _calendarFormat,
                           selectedDayPredicate: (day) {
@@ -193,42 +200,56 @@ class _MyHomePageState extends State<MyHomePage> {
                                   SizedBox(
                                     width: 60,
                                     child: Column(
-                                      children: timeSlots.map((time) => Container(
-                                        height: 60,
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          time,
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      )).toList(),
+                                      children: timeSlots
+                                          .map((time) => Container(
+                                                height: 60,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  time,
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ))
+                                          .toList(),
                                     ),
                                   ),
                                   // Calendar grid
                                   Expanded(
                                     child: Column(
-                                      children: timeSlots.map((time) => Container(
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          border: Border(
-                                            top: BorderSide(color: Colors.grey[300]!),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: List.generate(5, (index) => Expanded(
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                border: Border(
-                                                  right: BorderSide(color: Colors.grey[300]!),
+                                      children: timeSlots
+                                          .map((time) => Container(
+                                                height: 60,
+                                                decoration: BoxDecoration(
+                                                  border: Border(
+                                                    top: BorderSide(
+                                                        color:
+                                                            Colors.grey[300]!),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                          )),
-                                        ),
-                                      )).toList(),
+                                                child: Row(
+                                                  children: List.generate(
+                                                      5,
+                                                      (index) => Expanded(
+                                                            child: Container(
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                border: Border(
+                                                                  right: BorderSide(
+                                                                      color: Colors
+                                                                              .grey[
+                                                                          300]!),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          )),
+                                                ),
+                                              ))
+                                          .toList(),
                                     ),
                                   ),
                                 ],
@@ -297,14 +318,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
-                
+
                 // Map Icon
                 Align(
                   alignment: Alignment.bottomLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: IconButton(
-                      icon: Icon(Icons.map_outlined, size: 30, color: Colors.grey[600]),
+                      icon: Icon(Icons.map_outlined,
+                          size: 30, color: Colors.grey[600]),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -313,7 +335,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               backgroundColor: Colors.transparent,
                               child: Container(
                                 width: MediaQuery.of(context).size.width * 0.9,
-                                height: MediaQuery.of(context).size.height * 0.8,
+                                height:
+                                    MediaQuery.of(context).size.height * 0.8,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
@@ -324,7 +347,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                     Padding(
                                       padding: const EdgeInsets.all(16.0),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             'Floors Plan',
@@ -335,7 +359,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.close),
-                                            onPressed: () => Navigator.pop(context),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
                                           ),
                                         ],
                                       ),
@@ -347,7 +372,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                         margin: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
                                           color: Colors.grey[200],
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           border: Border.all(
                                             color: Colors.grey[300]!,
                                             width: 1,
