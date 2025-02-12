@@ -66,7 +66,7 @@ final appRouter = GoRouter(
         return SchedulingLandingScreen(documentId: id);
       },
     ),
-    GoRoute(path: 'algorithm', builder: (context, state) => BookingPage())
+    GoRoute(path: '/algorithm', builder: (context, state) => BookingPage())
   ],
 );
 

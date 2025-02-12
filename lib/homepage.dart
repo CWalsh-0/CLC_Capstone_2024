@@ -314,6 +314,27 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
+                        SizedBox(
+                          width: 250,
+                          child: ElevatedButton(
+                            onPressed: () => context.push('/algorithm'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1A47B8),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              'Demo Booking',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
