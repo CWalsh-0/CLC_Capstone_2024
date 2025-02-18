@@ -1,13 +1,13 @@
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutterdb/BookingForm.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutterdb/forgot_password_page.dart';
-import 'package:flutterdb/login_page.dart';
-import 'package:flutterdb/manage_bookings_page.dart';
-import 'package:flutterdb/signup_page.dart';
+import 'package:flutterdb/screens/forgot_password_page.dart';
+import 'package:flutterdb/screens/login_page.dart';
+import 'package:flutterdb/screens/manage_bookings_page.dart';
+import 'package:flutterdb/screens/signup_page.dart';
 import 'package:go_router/go_router.dart';
-import '../homepage.dart';
-import '../new_booking_page.dart';
+import '../screens/homepage.dart';
+import '../screens/new_booking_page.dart';
 import '../SchedulingLandingScreen.dart';
 import 'package:flutter/material.dart';
 
