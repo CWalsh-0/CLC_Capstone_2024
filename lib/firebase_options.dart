@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '698464399536',
     projectId: 'keyfob-pj',
     authDomain: 'keyfob-pj.firebaseapp.com',
-    storageBucket: 'keyfob-pj.appspot.com',
+    storageBucket: 'keyfob-pj.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
     appId: '1:698464399536:android:649093a951f9629ee78b75',
     messagingSenderId: '698464399536',
     projectId: 'keyfob-pj',
-    storageBucket: 'keyfob-pj.appspot.com',
+    storageBucket: 'keyfob-pj.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:698464399536:ios:3094445cc7a1f0d0e78b75',
     messagingSenderId: '698464399536',
     projectId: 'keyfob-pj',
-    storageBucket: 'keyfob-pj.appspot.com',
+    storageBucket: 'keyfob-pj.firebasestorage.app',
     iosBundleId: 'com.example.flutterdb',
   );
 
@@ -71,7 +71,7 @@ class DefaultFirebaseOptions {
     appId: '1:698464399536:ios:3094445cc7a1f0d0e78b75',
     messagingSenderId: '698464399536',
     projectId: 'keyfob-pj',
-    storageBucket: 'keyfob-pj.appspot.com',
+    storageBucket: 'keyfob-pj.firebasestorage.app',
     iosBundleId: 'com.example.flutterdb',
   );
 
@@ -81,7 +81,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '698464399536',
     projectId: 'keyfob-pj',
     authDomain: 'keyfob-pj.firebaseapp.com',
-    storageBucket: 'keyfob-pj.appspot.com',
+    storageBucket: 'keyfob-pj.firebasestorage.app',
   );
 
 }
