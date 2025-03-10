@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'FloorPlanModel.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -343,86 +344,104 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 // Map Icon
                 Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: IconButton(
-                      icon: Icon(Icons.map_outlined,
-                          size: 30, color: Colors.grey[600]),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Dialog(
-                              backgroundColor: Colors.transparent,
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.9,
-                                height:
-                                    MediaQuery.of(context).size.height * 0.8,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Header with close button
-                                    Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Floors Plan',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.close),
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Divider(),
-                                    // Placeholder for floor plan
-                                    Expanded(
-                                      child: Container(
-                                        margin: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[200],
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: Colors.grey[300]!,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'Floor Plan Display\n(Coming Soon)',
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.grey[600],
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
+  alignment: Alignment.bottomLeft,
+  child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: IconButton(
+      icon: Icon(Icons.map_outlined, size: 30, color: Colors.grey[600]),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return FloorPlanModel();
+          },
+        );
+      },
+    ),
+  ),
+),
+                
+                // Align(
+                //   alignment: Alignment.bottomLeft,
+                //   child: Padding(
+                //     padding: const EdgeInsets.all(16.0),
+                //     child: IconButton(
+                //       icon: Icon(Icons.map_outlined,
+                //           size: 30, color: Colors.grey[600]),
+                //       onPressed: () {
+                //         showDialog(
+                //           context: context,
+                //           builder: (BuildContext context) {
+                //             return Dialog(
+                //               backgroundColor: Colors.transparent,
+                //               child: Container(
+                //                 width: MediaQuery.of(context).size.width * 0.9,
+                //                 height:
+                //                     MediaQuery.of(context).size.height * 0.8,
+                //                 decoration: BoxDecoration(
+                //                   color: Colors.white,
+                //                   borderRadius: BorderRadius.circular(12),
+                //                 ),
+                //                 child: Column(
+                //                   children: [
+                //                     // Header with close button
+                //                     Padding(
+                //                       padding: const EdgeInsets.all(16.0),
+                //                       child: Row(
+                //                         mainAxisAlignment:
+                //                             MainAxisAlignment.spaceBetween,
+                //                         children: [
+                //                           Text(
+                //                             'Floors Plan',
+                //                             style: GoogleFonts.poppins(
+                //                               fontSize: 20,
+                //                               fontWeight: FontWeight.bold,
+                //                             ),
+                //                           ),
+                //                           IconButton(
+                //                             icon: const Icon(Icons.close),
+                //                             onPressed: () =>
+                //                                 Navigator.pop(context),
+                //                           ),
+                //                         ],
+                //                       ),
+                //                     ),
+                //                     const Divider(),
+                //                     // Placeholder for floor plan
+                //                     Expanded(
+                //                       child: Container(
+                //                         margin: const EdgeInsets.all(16),
+                //                         decoration: BoxDecoration(
+                //                           color: Colors.grey[200],
+                //                           borderRadius:
+                //                               BorderRadius.circular(8),
+                //                           border: Border.all(
+                //                             color: Colors.grey[300]!,
+                //                             width: 1,
+                //                           ),
+                //                         ),
+                //                         child: Center(
+                //                           child: Text(
+                //                             'Floor Plan Display\n(Coming Soon)',
+                //                             textAlign: TextAlign.center,
+                //                             style: GoogleFonts.poppins(
+                //                               color: Colors.grey[600],
+                //                               fontSize: 16,
+                //                             ),
+                //                           ),
+                //                         ),
+                //                       ),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               ),
+                //             );
+                //           },
+                //         );
+                //       },
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
