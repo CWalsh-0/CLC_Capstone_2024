@@ -41,9 +41,11 @@ final appRouter = GoRouter(
       builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
-      path: '/new-booking',
-      builder: (context, state) => NewBookingPage(),
-    ),
+        path: '/new-booking',
+        builder: (context, state) {
+          final _focusedDay = state.extra as DateTime;
+          return NewBookingPage(focusedDay: _focusedDay);
+        }),
     GoRoute(
       path: '/manage-bookings',
       builder: (context, state) => ManageBookingPage(),

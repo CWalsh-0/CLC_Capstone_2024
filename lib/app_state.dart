@@ -8,7 +8,6 @@ import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'guest_book_message.dart';
 
 class ApplicationState extends ChangeNotifier {
   ApplicationState() {
@@ -18,12 +17,6 @@ class ApplicationState extends ChangeNotifier {
   bool _loggedIn = false;
   //getter method thats just part of the class interface
   bool get loggedIn => _loggedIn;
-
-  //stream listener
-  StreamSubscription<QuerySnapshot>? _guestBookSubscription;
-  List<GuestBookMessage> _guestBookMessages = [];
-  //getter method thats just part of the class interface
-  List<GuestBookMessage> get guestBookMessages => _guestBookMessages;
 
   // write to db under collection type
   Future<DocumentReference> addMessageToGuestBook(String message) {
@@ -48,33 +41,5 @@ class ApplicationState extends ChangeNotifier {
     FirebaseUIAuth.configureProviders([
       EmailAuthProvider(),
     ]);
-
-    //listeners
-    FirebaseAuth.instance.userChanges().listen((user) {
-      if (user != null) {
-        _loggedIn = true;
-        _guestBookSubscription = FirebaseFirestore.instance
-            .collection('guestbook')
-            .orderBy('timestamp', descending: true)
-            .snapshots()
-            .listen((snapshot) {
-          _guestBookMessages = [];
-          for (final document in snapshot.docs) {
-            _guestBookMessages.add(
-              GuestBookMessage(
-                name: document.data()['name'] as String,
-                message: document.data()['text'] as String,
-              ),
-            );
-          }
-          notifyListeners();
-        });
-      } else {
-        _loggedIn = false;
-        _guestBookMessages = [];
-        _guestBookSubscription?.cancel();
-      }
-      notifyListeners();
-    });
   }
 }

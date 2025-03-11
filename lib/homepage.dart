@@ -177,6 +177,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             setState(() {
                               _selectedDay = selectedDay;
                               _focusedDay = focusedDay;
+                              print("On Day Select");
+                              print(_focusedDay);
+                              print(_selectedDay);
                             });
                           },
                           calendarStyle: const CalendarStyle(
@@ -274,7 +277,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         SizedBox(
                           width: 250,
                           child: ElevatedButton(
-                            onPressed: () => context.push('/new-booking'),
+                            onPressed: () => context.push(
+                              '/new-booking',
+                              extra: _focusedDay,
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1A47B8),
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -344,23 +350,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 // Map Icon
                 Align(
-  alignment: Alignment.bottomLeft,
-  child: Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: IconButton(
-      icon: Icon(Icons.map_outlined, size: 30, color: Colors.grey[600]),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return FloorPlanModel();
-          },
-        );
-      },
-    ),
-  ),
-),
-                
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: IconButton(
+                      icon: Icon(Icons.map_outlined,
+                          size: 30, color: Colors.grey[600]),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return FloorPlanModel();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
                 // Align(
                 //   alignment: Alignment.bottomLeft,
                 //   child: Padding(
