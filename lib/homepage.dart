@@ -1,9 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'FloorPlanModel.dart';
@@ -343,7 +341,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
 
                 // Map Icon
-                Align(
+Align(
   alignment: Alignment.bottomLeft,
   child: Padding(
     padding: const EdgeInsets.all(16.0),
@@ -353,7 +351,10 @@ class _MyHomePageState extends State<MyHomePage> {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return FloorPlanModel();
+            return FloorPlanModel(
+              selectedDate: _selectedDay ?? DateTime.now(),
+              userId: FirebaseAuth.instance.currentUser?.uid,
+            );
           },
         );
       },
