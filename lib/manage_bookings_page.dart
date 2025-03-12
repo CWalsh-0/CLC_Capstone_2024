@@ -99,6 +99,14 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
                           ),
                           Row(
                             children: [
+                              Text('Date of Booking: ',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              Text('${bookingData['date']}'),
+                            ],
+                          ),
+                          Row(
+                            children: [
                               Text('Booking Status: ',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
@@ -107,10 +115,31 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
                           ),
                           Row(
                             children: [
-                              Text('Time Booked: ',
+                              if (bookingData['time'] != null)
+                                Row(
+                                  children: [
+                                    Text('Time Booked: ',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Text('${bookingData['time']}'),
+                                  ],
+                                ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text('Start Time: ',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
-                              Text('${bookingData['time']}'),
+                              Text('${bookingData['start_time']}'),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text('End Time: ',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              Text('${bookingData['end_time']}'),
                             ],
                           ),
                           Row(
