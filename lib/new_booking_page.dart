@@ -160,6 +160,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
           .get();
 
       if (bookingQuery.docs.isEmpty) {
+        print("No bookings found");
         return true; // No bookings found, resource is available
       }
 
@@ -223,7 +224,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
         for (int i = 0; i < 2; i++) {
           if (selectedDesks[i] == true &&
               selectedDeskTimeSlots.containsKey(i)) {
-            String resourceId = 'room_${i + 1000}';
+            String resourceId = 'room_${i + 67890}';
             String timeSlot = selectedDeskTimeSlots[i]!;
 
             // Check availability before booking
@@ -254,7 +255,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
-                        'Desk ${i + 1000} is not available for the selected time')),
+                        'Desk ${i + 67890} is not available for the selected time')),
               );
             }
           }
@@ -263,7 +264,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
         // Process room bookings
         for (int i = 0; i < 1; i++) {
           if (roomTimes[i]!['start'] != null && roomTimes[i]!['end'] != null) {
-            String resourceId = 'room_${i + 67890}';
+            String resourceId = 'room_${i + 1000}';
             String startTime = roomTimes[i]!['start']!;
             String endTime = roomTimes[i]!['end']!;
 
@@ -306,7 +307,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
-                        'Room ${i + 67890} is not available for the selected time range')),
+                        'Room ${i + 1000} is not available for the selected time range')),
               );
             }
           }
@@ -660,7 +661,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               Expanded(
                 flex: 1,
                 child: Text(
-                  'Desk ${index + 1000}',
+                  'Desk ${index + 67890}',
                   style: GoogleFonts.poppins(),
                 ),
               ),
@@ -740,7 +741,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Room ${index + 67890}',
+                  'Room ${index + 1000}',
                   style: GoogleFonts.poppins(),
                 ),
               ),
