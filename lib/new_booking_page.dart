@@ -220,10 +220,10 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
       if (selectedBookingType == 'desk') {
         // Process desk bookings
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
           if (selectedDesks[i] == true &&
               selectedDeskTimeSlots.containsKey(i)) {
-            String resourceId = 'desk_${i + 1}';
+            String resourceId = 'room_${i + 1000}';
             String timeSlot = selectedDeskTimeSlots[i]!;
 
             // Check availability before booking
@@ -232,6 +232,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
             var rnd = Math.Random();
             int val = 600 + rnd.nextInt(601);
+            int valTime = 5 + rnd.nextInt(25);
 
             if (isAvailable) {
               final jsonBody = {
@@ -241,27 +242,28 @@ class _NewBookingPageState extends State<NewBookingPage> {
                 'date': formattedDate,
                 'time': timeSlot,
                 'status': 'approved',
-                'timeout': '120',
+                'timeout': valTime,
                 //'timestamp': timestamp,
                 'user_id': _userId,
                 'karma_points': val,
               };
+              print(jsonBody);
               sendRestCall(jsonBody);
             } else {
               // Show error for unavailable resource
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
-                        'Desk ${i + 1} is not available for the selected time')),
+                        'Desk ${i + 1000} is not available for the selected time')),
               );
             }
           }
         }
       } else if (selectedBookingType == 'room') {
         // Process room bookings
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 1; i++) {
           if (roomTimes[i]!['start'] != null && roomTimes[i]!['end'] != null) {
-            String resourceId = 'room_${i + 1000}';
+            String resourceId = 'room_${i + 67890}';
             String startTime = roomTimes[i]!['start']!;
             String endTime = roomTimes[i]!['end']!;
 
@@ -281,15 +283,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
             var rnd = Math.Random();
             int val = 600 + rnd.nextInt(601);
-
-            final jsonBody2 = {
-              'user_id': _userId,
-              'booking_type': "bookingType",
-              'time': "selectedDateTime",
-              'resource_id': "_resourceIdController.text",
-              'timeout': "_timeoutController.text",
-              'karma_points': 1200
-            };
+            int valTime = 5 + rnd.nextInt(25);
 
             if (isAvailable) {
               final jsonBody = {
@@ -300,18 +294,19 @@ class _NewBookingPageState extends State<NewBookingPage> {
                 'start_time': startTime,
                 'end_time': endTime,
                 'status': 'approved',
-                'timeout': '120',
+                'timeout': valTime,
                 //'timestamp': timestamp,
                 'user_id': _userId,
-                'karma_points': val, // Example value
+                'karma_points': val,
               };
+              print(jsonBody);
               sendRestCall(jsonBody);
             } else {
               // Show error for unavailable resource
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(
-                        'Room ${i + 1} is not available for the selected time range')),
+                        'Room ${i + 67890} is not available for the selected time range')),
               );
             }
           }
@@ -607,7 +602,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             Expanded(
                               child: ListView.builder(
                                 itemCount:
-                                    selectedBookingType == 'desk' ? 5 : 3,
+                                    selectedBookingType == 'desk' ? 2 : 1,
                                 itemBuilder: (context, index) {
                                   if (selectedBookingType == 'desk') {
                                     return buildDeskRow(index);
@@ -665,7 +660,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               Expanded(
                 flex: 1,
                 child: Text(
-                  'Desk ${index + 1}',
+                  'Desk ${index + 1000}',
                   style: GoogleFonts.poppins(),
                 ),
               ),
@@ -745,7 +740,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Room ${index + 1}',
+                  'Room ${index + 67890}',
                   style: GoogleFonts.poppins(),
                 ),
               ),
