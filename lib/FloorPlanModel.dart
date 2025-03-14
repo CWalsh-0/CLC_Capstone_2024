@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
+import 'dart:math';
 
 // Status enum for tracking availability
 enum ResourceStatus {
@@ -16,10 +18,10 @@ class FloorPlanModel extends StatefulWidget {
   final String? userId; // Current user ID to identify "my bookings"
 
   const FloorPlanModel({
-    Key? key,
+    super.key,
     this.selectedDate,
     this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _FloorPlanModelState createState() => _FloorPlanModelState();
@@ -29,14 +31,20 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
   String selectedFloor = '1st';
   int currentIndex = 0;
   bool isLoading = true;
+  late DateTime _currentDate;
   
   // Maps to store status of each resource
   Map<String, ResourceStatus> deskStatuses = {};
   Map<String, ResourceStatus> roomStatuses = {};
+  
+  // Maps to store booking details for tooltips
+  Map<String, Map<String, dynamic>> deskBookingDetails = {};
+  Map<String, Map<String, dynamic>> roomBookingDetails = {};
 
   @override
   void initState() {
     super.initState();
+    _currentDate = widget.selectedDate ?? DateTime.now();
     _loadResourceStatuses();
   }
 
@@ -48,67 +56,94 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
 
     try {
       // Format the selected date
-      final dateToUse = widget.selectedDate ?? DateTime.now();
-      String formattedDate = DateFormat('yyyy-MM-dd').format(dateToUse);
+      String formattedDate = DateFormat('yyyy-MM-dd').format(_currentDate);
       
-      // Fetch all bookings for this date
+      // Reset status maps
+      deskStatuses.clear();
+      roomStatuses.clear();
+      deskBookingDetails.clear();
+      roomBookingDetails.clear();
+      
+      // Initialize all resources as available
+      _initializeResourceStatuses();
+      
+      // Fetch all bookings for this date from the bookings collection
       final bookingsSnapshot = await FirebaseFirestore.instance
           .collection('bookings')
           .where('date', isEqualTo: formattedDate)
           .get();
 
-      // Reset statuses
-      deskStatuses.clear();
-      roomStatuses.clear();
-
-      // Initialize all desks as available
-      for (int floor = 1; floor <= 2; floor++) {
-        String floorStr = floor == 1 ? '1st' : '2nd';
-        int numDesks = floorStr == '1st' ? 9 : 6; // 3 tables * 3 seats for 1st floor, 2 tables * 3 seats for 2nd floor
-        
-        for (int i = 1; i <= numDesks; i++) {
-          deskStatuses['desk_${floorStr}_$i'] = ResourceStatus.available;
-        }
-      }
-
-      // Initialize all rooms as available
-      for (int floor = 1; floor <= 2; floor++) {
-        String floorStr = floor == 1 ? '1st' : '2nd';
-        int baseRoomNum = floorStr == '1st' ? 1 : 6;
-        
-        for (int i = 0; i < 6; i++) { // 6 rooms per floor (3 rows * 2 columns)
-          int roomNum = baseRoomNum + i;
-          roomStatuses['room_${floorStr}_$roomNum'] = ResourceStatus.available;
-        }
-      }
-
-      // Process bookings to update statuses
+      // Process each booking
       for (var doc in bookingsSnapshot.docs) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        Map<String, dynamic> data = doc.data();
         String resourceId = data['resource_id'] as String;
-        bool isMyBooking = data['user_id'] == widget.userId;
+        String userId = data['user_id'] as String;
+        String bookingType = data['booking_type'] as String;
+        String status = data['status'] as String;
         
-        if (resourceId.startsWith('desk_')) {
-          // Extract floor and desk number
-          List<String> parts = resourceId.split('_');
-          String deskId = 'desk_${parts[1]}_${parts[2]}';
-          
-          deskStatuses[deskId] = isMyBooking 
-              ? ResourceStatus.myBooking 
-              : ResourceStatus.booked;
+        // Only process approved bookings
+        if (status != 'approved') continue;
+        
+        bool isMyBooking = userId == widget.userId;
+        
+        // Process desk/hotdesk bookings
+        if (bookingType.toLowerCase().contains('hotdesk') || resourceId.startsWith('room_6')) {
+          if (resourceId.startsWith('room_6')) {
+            // Hotdesk bookings with IDs like "room_67890"
+            String deskId = resourceId;
+            
+            // Only process desks for the current floor
+            if ((selectedFloor == '1st' && int.parse(deskId.split('_')[1]) >= 67890 && int.parse(deskId.split('_')[1]) < 67892) ||
+                (selectedFloor == '2nd' && int.parse(deskId.split('_')[1]) >= 67892)) {
+              
+              // Check time slot
+              String timeSlot = data['time'] ?? 'All Day';
+              
+              // Store full booking details for tooltip
+              deskBookingDetails[deskId] = {
+                'status': status,
+                'time': timeSlot,
+                'isMyBooking': isMyBooking,
+                'date': formattedDate,
+                'duration': data['timeout'] ?? 0,
+              };
+              
+              // Set status based on ownership
+              deskStatuses[deskId] = isMyBooking 
+                  ? ResourceStatus.myBooking 
+                  : ResourceStatus.booked;
+            }
+          }
         } 
-        else if (resourceId.startsWith('room_')) {
-          // Extract floor and room number
-          List<String> parts = resourceId.split('_');
-          String roomId = 'room_${parts[1]}_${parts[2]}';
-          
-          // Check time range for partial availability
-          if (data.containsKey('start_time') && data.containsKey('end_time')) {
-            // For simplicity, we'll mark rooms as either booked or my booking
-            // A more sophisticated implementation would check for overlapping time slots
-            roomStatuses[roomId] = isMyBooking 
-                ? ResourceStatus.myBooking 
-                : ResourceStatus.booked;
+        // Process conference room bookings
+        else if (bookingType.toLowerCase().contains('conference') || resourceId.startsWith('room_1')) {
+          if (resourceId.startsWith('room_1')) {
+            // Room bookings with IDs like "room_1000"
+            String roomId = resourceId;
+            
+            // Only process rooms for the current floor
+            if ((selectedFloor == '1st' && int.parse(roomId.split('_')[1]) < 1005) ||
+                (selectedFloor == '2nd' && int.parse(roomId.split('_')[1]) >= 1005)) {
+              
+              // Get time range
+              String startTime = data['start_time'] ?? '';
+              String endTime = data['end_time'] ?? '';
+              
+              // Store full booking details for tooltip
+              roomBookingDetails[roomId] = {
+                'status': status,
+                'start_time': startTime,
+                'end_time': endTime,
+                'isMyBooking': isMyBooking,
+                'date': formattedDate,
+                'duration': data['timeout'] ?? 0,
+              };
+              
+              // Set status based on ownership
+              roomStatuses[roomId] = isMyBooking 
+                  ? ResourceStatus.myBooking 
+                  : ResourceStatus.booked;
+            }
           }
         }
       }
@@ -121,6 +156,32 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+  
+  // Initialize all resources as available
+  void _initializeResourceStatuses() {
+    // Initialize desk statuses based on floor
+    if (selectedFloor == '1st') {
+      // First floor desks (room_67890, room_67891)
+      for (int i = 67890; i < 67892; i++) {
+        deskStatuses['room_$i'] = ResourceStatus.available;
+      }
+      
+      // First floor rooms (room_1000 to room_1004)
+      for (int i = 1000; i < 1005; i++) {
+        roomStatuses['room_$i'] = ResourceStatus.available;
+      }
+    } else {
+      // Second floor desks (room_67892+)
+      for (int i = 67892; i < 67894; i++) {
+        deskStatuses['room_$i'] = ResourceStatus.available;
+      }
+      
+      // Second floor rooms (room_1005+)
+      for (int i = 1005; i < 1010; i++) {
+        roomStatuses['room_$i'] = ResourceStatus.available;
+      }
     }
   }
 
@@ -138,19 +199,30 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
     }
   }
 
+  void _changeDate(DateTime date) {
+    setState(() {
+      _currentDate = date;
+    });
+    _loadResourceStatuses();
+  }
+
   Widget _buildDeskMap() {
     return isLoading
         ? Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: Container(
-                width: 800,
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: SizedBox(
+                width: double.infinity,
                 height: 600,
-                padding: EdgeInsets.all(16),
                 child: RepaintBoundary(
                   child: CustomPaint(
-                    painter: DeskMapPainter(selectedFloor, deskStatuses),
+                    painter: DeskMapPainter(
+                      selectedFloor, 
+                      deskStatuses,
+                      deskBookingDetails,
+                      (resourceId) => _showBookingDetails(resourceId, true)
+                    ),
                     child: Container(),
                   ),
                 ),
@@ -162,22 +234,91 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
   Widget _buildMeetingRoomMap() {
     return isLoading
         ? Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: Container(
-                width: 800,
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: SizedBox(
+                width: double.infinity,
                 height: 600,
-                padding: EdgeInsets.all(16),
                 child: RepaintBoundary(
                   child: CustomPaint(
-                    painter: MeetingRoomMapPainter(selectedFloor, roomStatuses),
+                    painter: MeetingRoomMapPainter(
+                      selectedFloor, 
+                      roomStatuses,
+                      roomBookingDetails,
+                      (resourceId) => _showBookingDetails(resourceId, false)
+                    ),
                     child: Container(),
                   ),
                 ),
               ),
             ),
           );
+  }
+  
+  // Show booking details when a resource is tapped
+  void _showBookingDetails(String resourceId, bool isDesk) {
+    Map<String, dynamic>? details = isDesk 
+        ? deskBookingDetails[resourceId] 
+        : roomBookingDetails[resourceId];
+        
+    if (details == null) {
+      // If no booking, show available message
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Resource Available'),
+            content: Text('$resourceId is available for booking.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ],
+          );
+        }
+      );
+      return;
+    }
+    
+    // Show booking details
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        bool isMyBooking = details['isMyBooking'] ?? false;
+        
+        return AlertDialog(
+          title: Text(
+            isMyBooking ? 'Your Booking' : 'Booked Resource',
+            style: TextStyle(
+              color: isMyBooking ? Colors.blue : Colors.red,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Resource: $resourceId'),
+              Text('Date: ${details['date']}'),
+              if (isDesk) Text('Time Slot: ${details['time']}'),
+              if (!isDesk) ...[
+                Text('Start Time: ${details['start_time']}'),
+                Text('End Time: ${details['end_time']}'),
+              ],
+              Text('Duration: ${details['duration']} minutes'),
+              Text('Status: ${details['status']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      }
+    );
   }
 
   @override
@@ -207,11 +348,40 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
                     ),
                   ),
                   Spacer(),
-                  Text(
-                    'Date: ${DateFormat('MMM d, yyyy').format(widget.selectedDate ?? DateTime.now())}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                  // Date picker with smaller size to fix overflow
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: _currentDate,
+                        firstDate: DateTime.now().subtract(Duration(days: 30)),
+                        lastDate: DateTime.now().add(Duration(days: 60)),
+                      );
+                      if (picked != null && picked != _currentDate) {
+                        _changeDate(picked);
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFE8E9FF),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Color(0xFF1A47B8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today, size: 14, color: Color(0xFF1A47B8)),
+                          SizedBox(width: 4),
+                          Text(
+                            DateFormat('MMM d').format(_currentDate),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF1A47B8),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -298,7 +468,6 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
                   _buildLegendItem('My booking', Colors.blue),
                   _buildLegendItem('Available', Colors.green),
                   _buildLegendItem('Booked', Colors.red),
-                  _buildLegendItem('Partially available', Colors.orange),
                 ],
               ),
             ),
@@ -314,6 +483,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
       onTap: () {
         setState(() {
           selectedFloor = floor;
+          _loadResourceStatuses(); // Reload statuses when floor changes
         });
       },
       child: Container(
@@ -348,114 +518,100 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 16,
+          height: 16,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        SizedBox(width: 8),
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 12),
+          style: GoogleFonts.poppins(fontSize: 14),
         ),
       ],
     );
   }
 }
 
+// Custom painter for desk map
 class DeskMapPainter extends CustomPainter {
   final String floor;
   final Map<String, ResourceStatus> deskStatuses;
+  final Map<String, Map<String, dynamic>> deskBookingDetails;
+  final Function(String) onTapResource;
   
-  DeskMapPainter(this.floor, this.deskStatuses);
+  DeskMapPainter(this.floor, this.deskStatuses, this.deskBookingDetails, this.onTapResource);
+  
+  // Track clickable regions for hotspots
+  final Map<String, Rect> clickableRegions = {};
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Clear previous clickable regions
+    clickableRegions.clear();
+    
     final paint = Paint()
       ..color = Colors.grey[300]!
       ..style = PaintingStyle.fill;
 
-    int numTables = floor == '1st' ? 3 : 2;
+    final tablePaint = Paint()
+      ..color = Colors.grey[400]!
+      ..style = PaintingStyle.fill;
     
-    // Calculate total height needed for all tables
-    double tableHeight = 120; // Height of table plus chairs
-    double totalHeight = tableHeight * numTables + (numTables - 1) * 60; // Including gaps
+    // Center the drawing in the available space
+    double centerX = size.width / 2;
     
-    // Calculate starting Y position to center vertically
-    double startY = (size.height - totalHeight) / 2;
-    
-    // Position tables more towards left, centered around x=200
-    double centerX = 200;
-    double tableWidth = 160;
-    double startX = centerX - (tableWidth / 2);
+    // Table dimensions
+    double tableWidth = 180;
+    double tableHeight = 40;
+    double tableSpacing = 120; // Increased spacing between tables
 
-    // Counter for desk numbering
-    int deskCounter = 1;
+    // First floor has 3 tables, second floor has 2 tables
+    int numTables = floor == '1st' ? 1 : 1; // Just display 1 table per floor for simplicity
+    
+    // Calculate total height needed
+    double totalHeight = numTables * (tableHeight + tableSpacing);
+    double startY = (size.height - totalHeight) / 2;
 
     for (int i = 0; i < numTables; i++) {
-      double yOffset = startY + (i * (tableHeight + 60));
+      double yOffset = startY + (i * (tableHeight + tableSpacing));
+      double tableX = centerX - (tableWidth / 2);
       
-      // Draw desk
+      // Draw table
       canvas.drawRect(
-        Rect.fromLTWH(startX, yOffset + 15, tableWidth, 40),
-        paint
+        Rect.fromLTWH(tableX, yOffset, tableWidth, tableHeight),
+        tablePaint
       );
 
-      // Draw 3 chairs on top with status colors
-      for (int j = 0; j < 3; j++) {
-        String deskId = 'desk_${floor}_$deskCounter';
-        ResourceStatus status = deskStatuses[deskId] ?? ResourceStatus.available;
-        
-        _drawChair(
-          canvas,
-          startX + 30 + (j * 50),
-          yOffset,
-          deskCounter,
-          status
-        );
-        
-        deskCounter++;
-      }
-
-      // Draw 3 chairs on bottom with status colors
-      for (int j = 0; j < 3; j++) {
-        String deskId = 'desk_${floor}_$deskCounter';
-        ResourceStatus status = deskStatuses[deskId] ?? ResourceStatus.available;
-        
-        _drawChair(
-          canvas,
-          startX + 30 + (j * 50),
-          yOffset + 70,
-          deskCounter,
-          status
-        );
-        
-        deskCounter++;
-      }
+      // Draw desks based on floor
+      int baseIndex = floor == '1st' ? 67890 : 67892;
+      
+      // Draw desks for the specified floor
+      _drawDesk(canvas, tableX + 45, yOffset - 25, baseIndex, size);
+      _drawDesk(canvas, tableX + 135, yOffset - 25, baseIndex + 1, size);
     }
   }
-
-  void _drawChair(Canvas canvas, double x, double y, int deskNumber, ResourceStatus status) {
+  
+  void _drawDesk(Canvas canvas, double x, double y, int deskNumber, Size size) {
+    String deskId = 'room_$deskNumber';
+    ResourceStatus status = deskStatuses[deskId] ?? ResourceStatus.available;
+    
     // Choose color based on status
     Color statusColor;
     switch (status) {
       case ResourceStatus.available:
         statusColor = Colors.green;
-        break;
       case ResourceStatus.booked:
         statusColor = Colors.red;
-        break;
       case ResourceStatus.partiallyAvailable:
         statusColor = Colors.orange;
-        break;
       case ResourceStatus.myBooking:
         statusColor = Colors.blue;
-        break;
     }
     
-    // Draw circle with status color
+    // Draw chair circle with status color
     final fillPaint = Paint()
       ..color = statusColor
       ..style = PaintingStyle.fill;
@@ -466,207 +622,200 @@ class DeskMapPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     
     // Draw filled circle
-    canvas.drawCircle(Offset(x, y), 12, fillPaint);
+    canvas.drawCircle(Offset(x, y), 20, fillPaint);
     
     // Draw border
-    canvas.drawCircle(Offset(x, y), 12, borderPaint);
+    canvas.drawCircle(Offset(x, y), 20, borderPaint);
     
-    // Draw desk number
-    final textPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-      
-    // Draw number directly on canvas without TextPainter
-    // This avoids the TextDirection issues
-    final String numberText = deskNumber.toString();
+    // Store clickable region
+    clickableRegions[deskId] = Rect.fromCircle(center: Offset(x, y), radius: 20);
     
-    // For simplicity, we'll draw a simple number
-    // In a production app, use a simpler approach to draw text
-    // or create a custom number drawing function
-    final textX = x - 4; // Simple centering approach
-    final textY = y - 6;
+    // Create a paragraph to draw text properly
+    final builder = ui.ParagraphBuilder(ui.ParagraphStyle(
+      textAlign: ui.TextAlign.center,
+      fontSize: 12,
+    ))
+      ..pushStyle(ui.TextStyle(color: Colors.black))
+      ..addText('Desk $deskNumber');
     
-    // For single digit numbers (1-9)
-    if (numberText.length == 1) {
-      canvas.drawCircle(Offset(x, y), 9, fillPaint);
-      
-      // Draw a bold "+" as a substitute for numbers to avoid text issues
-      final numberPaint = Paint()
-        ..color = Colors.white
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
-      
-      // Draw horizontal line for "+"
-      canvas.drawLine(
-        Offset(x - 4, y),
-        Offset(x + 4, y),
-        numberPaint
-      );
-      
-      // Draw vertical line for "+"
-      canvas.drawLine(
-        Offset(x, y - 4),
-        Offset(x, y + 4),
-        numberPaint
-      );
-    } 
-    // For double digit numbers (10+)
-    else {
-      canvas.drawCircle(Offset(x, y), 9, fillPaint);
-      
-      // Draw a simple asterisk "*" shape for double digits
-      final numberPaint = Paint()
-        ..color = Colors.white
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
-      
-      // Draw X shape
-      canvas.drawLine(
-        Offset(x - 4, y - 4),
-        Offset(x + 4, y + 4),
-        numberPaint
-      );
-      
-      canvas.drawLine(
-        Offset(x - 4, y + 4),
-        Offset(x + 4, y - 4),
-        numberPaint
-      );
-    }
+    final paragraph = builder.build()
+      ..layout(ui.ParagraphConstraints(width: 80));
+    
+    // Position text
+    double textY = y - 35; // Put text above the circle
+    
+    canvas.drawParagraph(
+      paragraph,
+      Offset(x - 40, textY)
+    );
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  
+  @override
+  bool hitTest(Offset position) {
+    for (var entry in clickableRegions.entries) {
+      if (entry.value.contains(position)) {
+        onTapResource(entry.key);
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
+// Custom painter for meeting room map
 class MeetingRoomMapPainter extends CustomPainter {
   final String floor;
   final Map<String, ResourceStatus> roomStatuses;
+  final Map<String, Map<String, dynamic>> roomBookingDetails;
+  final Function(String) onTapResource;
   
-  MeetingRoomMapPainter(this.floor, this.roomStatuses);
+  MeetingRoomMapPainter(this.floor, this.roomStatuses, this.roomBookingDetails, this.onTapResource);
+  
+  // Track clickable regions for hotspots
+  final Map<String, Rect> clickableRegions = {};
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int row = 0; row < 3; row++) {
-      double yOffset = row * 200.0;
-      
-      for (int col = 0; col < 2; col++) {
-        double xOffset = col * 250.0;
-        
-        // Calculate room number based on floor
-        int baseNumber = floor == '1st' ? 1 : 6;
-        int roomNumber = baseNumber + (row * 2) + col;
-        
-        // Alternate between 4 and 6 seats
-        bool isLargeRoom = roomNumber % 2 == 0;
-        
-        // Get status for this room
-        String roomId = 'room_${floor}_$roomNumber';
-        ResourceStatus status = roomStatuses[roomId] ?? ResourceStatus.available;
-        
-        _drawMeetingRoom(
-          canvas,
-          30 + xOffset,
-          50 + yOffset,
-          'Room #$roomNumber',
-          isLargeRoom,
-          status,
-          roomNumber
-        );
-      }
-    }
+    // Clear previous clickable regions
+    clickableRegions.clear();
+    
+    // Base room number based on floor
+    final int baseRoomNum = floor == '1st' ? 1000 : 1005;
+    
+    // Calculate available width to fit all rooms without overflow
+    double availableWidth = size.width - 32; // Account for padding
+    double roomWidth = min(170.0, availableWidth * 0.45); // Limit maximum size and make proportional
+    double roomHeight = roomWidth * 0.9; // Maintain aspect ratio
+    double horizontalGap = (availableWidth - (roomWidth * 2)) / 3; // Distribute remaining space
+    
+    // Just display the first room for simplicity
+    int roomNumber = baseRoomNum;
+    String roomId = 'room_$roomNumber';
+    ResourceStatus status = roomStatuses[roomId] ?? ResourceStatus.available;
+    
+    // Position room centered
+    double xOffset = (size.width - roomWidth) / 2;
+    double yOffset = 100;
+    
+    _drawMeetingRoom(
+      canvas,
+      xOffset,
+      yOffset,
+      roomNumber,
+      status,
+      roomWidth,
+      roomHeight
+    );
+    
+    // Store clickable region
+    clickableRegions[roomId] = Rect.fromLTWH(xOffset, yOffset, roomWidth, roomHeight);
   }
 
-  void _drawMeetingRoom(Canvas canvas, double x, double y, String label, bool isLargeRoom, ResourceStatus status, int roomNumber) {
+  void _drawMeetingRoom(Canvas canvas, double x, double y, int roomNumber, ResourceStatus status, double width, double height) {
     // Choose color based on status
     Color statusColor;
     switch (status) {
       case ResourceStatus.available:
-        statusColor = Colors.green.withOpacity(0.3);
-        break;
+        statusColor = Colors.green.withOpacity(0.2);
       case ResourceStatus.booked:
-        statusColor = Colors.red.withOpacity(0.3);
-        break;
+        statusColor = Colors.red.withOpacity(0.2);
       case ResourceStatus.partiallyAvailable:
-        statusColor = Colors.orange.withOpacity(0.3);
-        break;
+        statusColor = Colors.orange.withOpacity(0.2);
       case ResourceStatus.myBooking:
-        statusColor = Colors.blue.withOpacity(0.3);
-        break;
+        statusColor = Colors.blue.withOpacity(0.2);
     }
     
+    // Draw room rectangle with status color
     final roomPaint = Paint()
       ..color = statusColor
       ..style = PaintingStyle.fill;
-      
+    
     final borderPaint = Paint()
-      ..color = Colors.grey[800]!
+      ..color = Colors.black
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-
-    // Draw room with status color
-    canvas.drawRect(Rect.fromLTWH(x, y, 180, 120), roomPaint);
+    
+    // Draw filled rectangle
+    canvas.drawRect(
+      Rect.fromLTWH(x, y, width, height),
+      roomPaint
+    );
     
     // Draw border
-    canvas.drawRect(Rect.fromLTWH(x, y, 180, 120), borderPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(x, y, width, height),
+      borderPaint
+    );
 
-    if (isLargeRoom) {
-      // Draw 6 chairs (3 on each side)
-      _drawChair(canvas, x + 45, y + 30);
-      _drawChair(canvas, x + 45, y + 60);
-      _drawChair(canvas, x + 45, y + 90);
-      _drawChair(canvas, x + 135, y + 30);
-      _drawChair(canvas, x + 135, y + 60);
-      _drawChair(canvas, x + 135, y + 90);
-    } else {
-      // Draw 4 chairs (2 on each side)
-      _drawChair(canvas, x + 45, y + 40);
-      _drawChair(canvas, x + 45, y + 80);
-      _drawChair(canvas, x + 135, y + 40);
-      _drawChair(canvas, x + 135, y + 80);
-    }
-
-    // Draw room number text in the center of the room
-    final labelPaint = Paint()
-      ..color = Colors.black87
-      ..style = PaintingStyle.fill;
-      
-    final textX = x + 90; // Center of room
-    final textY = y + 60; // Center of room
+    // Draw room name text using paragraph
+    final builder = ui.ParagraphBuilder(ui.ParagraphStyle(
+      textAlign: ui.TextAlign.center,
+      fontSize: 18,
+      fontWeight: ui.FontWeight.bold,
+    ))
+      ..pushStyle(ui.TextStyle(color: Colors.black))
+      ..addText('Room $roomNumber');
     
-    // Draw a simple label without TextPainter
-    final roomLabelPaint = Paint()
-      ..color = Colors.black87
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-      
-    // Draw a simple border line below to indicate "this is Room X"
-    canvas.drawLine(
-      Offset(x + 60, y + 130),
-      Offset(x + 120, y + 130),
-      roomLabelPaint
+    final paragraph = builder.build()
+      ..layout(ui.ParagraphConstraints(width: width));
+    
+    // Position text at the top of the room, above the circles
+    canvas.drawParagraph(
+      paragraph,
+      Offset(x, y + 10)
     );
     
     // Draw capacity indicator
-    final capacityText = 'Max: ${isLargeRoom ? 6 : 4}';
-    final capacityY = y + 150;
+    final capacityText = '6 people';
     
-    // Add a capacity marker
-    canvas.drawCircle(
-      Offset(x + 90, capacityY - 5),
-      3,
-      roomLabelPaint
+    final capacityBuilder = ui.ParagraphBuilder(ui.ParagraphStyle(
+      textAlign: ui.TextAlign.center,
+      fontSize: 14,
+    ))
+      ..pushStyle(ui.TextStyle(color: Colors.black54))
+      ..addText(capacityText);
+    
+    final capacityParagraph = capacityBuilder.build()
+      ..layout(ui.ParagraphConstraints(width: width));
+    
+    // Position capacity text at bottom of room
+    canvas.drawParagraph(
+      capacityParagraph,
+      Offset(x, y + height - 30)
     );
-  }
-
-  void _drawChair(Canvas canvas, double x, double y) {
-    final paint = Paint()
+    
+    // Draw chair circles
+    final chairPaint = Paint()
       ..color = Colors.grey[600]!
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(Offset(x, y), 12, paint);
+      ..strokeWidth = 1.0;
+    
+    // Large room - 6 chairs in a grid pattern
+    // Left column
+    canvas.drawCircle(Offset(x + width * 0.3, y + height * 0.3), 10, chairPaint);
+    canvas.drawCircle(Offset(x + width * 0.3, y + height * 0.5), 10, chairPaint);
+    canvas.drawCircle(Offset(x + width * 0.3, y + height * 0.7), 10, chairPaint);
+    
+    // Right column
+    canvas.drawCircle(Offset(x + width * 0.7, y + height * 0.3), 10, chairPaint);
+    canvas.drawCircle(Offset(x + width * 0.7, y + height * 0.5), 10, chairPaint);
+    canvas.drawCircle(Offset(x + width * 0.7, y + height * 0.7), 10, chairPaint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  
+  @override
+  bool hitTest(Offset position) {
+    for (var entry in clickableRegions.entries) {
+      if (entry.value.contains(position)) {
+        onTapResource(entry.key);
+        return true;
+      }
+    }
+    return false;
+  }
 }
