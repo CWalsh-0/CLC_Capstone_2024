@@ -603,7 +603,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             Expanded(
                               child: ListView.builder(
                                 itemCount:
-                                    selectedBookingType == 'desk' ? 2 : 1,
+                                    selectedBookingType == 'desk' ? 2 : 2,
                                 itemBuilder: (context, index) {
                                   if (selectedBookingType == 'desk') {
                                     return buildDeskRow(index);

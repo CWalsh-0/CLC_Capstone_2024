@@ -13,6 +13,7 @@ Map<String, dynamic>? selectedBookingData;
 
 class _ManageBookingPageState extends State<ManageBookingPage> {
   String? selectedBookingId;
+  String? selectedBookingType;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +63,7 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
                 var booking = bookings[index];
                 var bookingData = booking.data() as Map<String, dynamic>;
                 String bookingId = booking.id;
+                String bookingType = bookingData["booking_type"];
 
                 return Container(
                     margin: EdgeInsets.all(8),
@@ -159,9 +161,11 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
                             selectedBookingId =
                                 null; // deselect if already selected
                             selectedBookingData = null;
+                            selectedBookingType = null;
                           } else {
                             selectedBookingId = bookingId;
                             selectedBookingData = bookingData;
+                            selectedBookingType = bookingData['booking_type'];
                           }
                         });
                       },
@@ -186,8 +190,8 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
                             IconButton(
                               icon: Icon(Icons.delete),
                               onPressed: () {
-                                _showDeleteConfirmationDialog(
-                                    context, bookingId);
+                                _showDeleteConfirmationDialog(context,
+                                    bookingId, bookingData['booking_type']);
                               },
                             ),
                           ],
@@ -202,7 +206,8 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, String bookingId) {
+  void _showDeleteConfirmationDialog(
+      BuildContext context, String bookingId, String bookingType) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -220,7 +225,7 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
               onPressed: () {
                 // call the function to delete the booking
                 _deleteBooking(bookingId);
-                _resetRoom(bookingId);
+                _resetRoom(bookingId, bookingType);
                 Navigator.of(context).pop();
               },
               child: Text('Delete'),
@@ -244,15 +249,24 @@ class _ManageBookingPageState extends State<ManageBookingPage> {
   }
 }
 
-void _resetRoom(String bookingId) async {
+void _resetRoom(String bookingId, String bookingType) async {
+  QuerySnapshot querySnapshot;
   try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('spaces')
-        .doc("hotdesks")
-        .collection("hotdesk_bookings")
-        .where("booking_id", isEqualTo: bookingId)
-        .get();
-
+    if (bookingType == 'Hotdesk') {
+      querySnapshot = await FirebaseFirestore.instance
+          .collection('spaces')
+          .doc("hotdesks")
+          .collection("hotdesk_bookings")
+          .where("booking_id", isEqualTo: bookingId)
+          .get();
+    } else {
+      querySnapshot = await FirebaseFirestore.instance
+          .collection('spaces')
+          .doc("conference_rooms")
+          .collection("conference_rooms_bookings")
+          .where("booking_id", isEqualTo: bookingId)
+          .get();
+    }
     for (var doc in querySnapshot.docs) {
       // we should probably keep the rooms and not generate them
       //await doc.reference.delete();
@@ -272,8 +286,8 @@ void _resetRoom(String bookingId) async {
   }
 }
 
-void _showEditDialog(
-    BuildContext context, String bookingId, Map<String, dynamic> bookingData) {
+void _showEditDialog(BuildContext context, String bookingId,
+    Map<String, dynamic> bookingData, String bookingType) {
   TextEditingController timeoutController =
       TextEditingController(text: bookingData['timeout'].toString());
   TextEditingController statusController =
@@ -281,95 +295,222 @@ void _showEditDialog(
 
   // Dropdown options for time slots
   final List<String> dateTimeTypes = ['Allday', 'Morning', 'Afternoon'];
+  final List<String> availableTimes = [
+    '9:00',
+    '9:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '12:00',
+    '12:30',
+    '13:00',
+    '13:30',
+    '14:00',
+    '14:30',
+    '15:00',
+    '15:30',
+    '16:00',
+    '16:30',
+    '17:00'
+  ];
+  print("hello");
+
   String selectedTime = bookingData['time']; // Default to existing time
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Edit Booking"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: "Time Booked",
-                  border: OutlineInputBorder(),
+  if (bookingType == 'Hotdesk') {
+    print("Im a hotdesk");
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Edit Booking"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: "Time Booked",
+                    border: OutlineInputBorder(),
+                  ),
+                  value: selectedTime,
+                  items: dateTimeTypes.map((String time) {
+                    return DropdownMenuItem<String>(
+                      value: time,
+                      child: Text(time),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    selectedTime = newValue!; // update selected time
+                  },
                 ),
-                value: selectedTime,
-                items: dateTimeTypes.map((String time) {
-                  return DropdownMenuItem<String>(
-                    value: time,
-                    child: Text(time),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  selectedTime = newValue!; // update selected time
-                },
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: timeoutController,
-                decoration: InputDecoration(labelText: "Duration (mins)"),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: statusController,
-                decoration: InputDecoration(labelText: "Status"),
-              ),
-            ],
+                SizedBox(height: 10),
+                TextField(
+                  controller: timeoutController,
+                  decoration: InputDecoration(labelText: "Duration (mins)"),
+                  keyboardType: TextInputType.number,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: statusController,
+                  decoration: InputDecoration(labelText: "Status"),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection('spaces')
-                  .doc("hotdesks")
-                  .collection("hotdesk_bookings")
-                  .doc(selectedBookingData?["resource_id"])
-                  .update({
-                "time": selectedTime,
-                "timeout": int.parse(timeoutController.text),
-                "status": statusController.text,
-              });
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await FirebaseFirestore.instance
+                    .collection('spaces')
+                    .doc("hotdesks")
+                    .collection("hotdesk_bookings")
+                    .doc(selectedBookingData?["resource_id"])
+                    .update({
+                  "time": selectedTime,
+                  "timeout": int.parse(timeoutController.text),
+                  "status": statusController.text,
+                });
 
-              Navigator.of(context).pop();
-              print("Booking $bookingId updated successfully!");
-            },
-            child: Text("Save"),
+                Navigator.of(context).pop();
+                print("Booking $bookingId updated successfully!");
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  } else {
+    print("Im a conference room");
+    String startTime = bookingData['start_time'];
+    String endTime = bookingData['end_time'];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Edit Booking"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: "Start Time",
+                    border: OutlineInputBorder(),
+                  ),
+                  value: startTime,
+                  items: availableTimes.map((String time) {
+                    return DropdownMenuItem<String>(
+                      value: time,
+                      child: Text(time),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    startTime = newValue!; // update selected time
+                  },
+                ),
+                SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: "End Time",
+                    border: OutlineInputBorder(),
+                  ),
+                  value: endTime,
+                  items: availableTimes.map((String time) {
+                    return DropdownMenuItem<String>(
+                      value: time,
+                      child: Text(time),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    endTime = newValue!; // update selected time
+                  },
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: timeoutController,
+                  decoration: InputDecoration(labelText: "Duration (mins)"),
+                  keyboardType: TextInputType.number,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: statusController,
+                  decoration: InputDecoration(labelText: "Status"),
+                ),
+              ],
+            ),
           ),
-        ],
-      );
-    },
-  );
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await FirebaseFirestore.instance
+                    .collection('spaces')
+                    .doc("conference_rooms")
+                    .collection("conference_rooms_bookings")
+                    .doc(selectedBookingData?["resource_id"])
+                    .update({
+                  "start_time": startTime,
+                  "end_time": endTime,
+                  "timeout": int.parse(timeoutController.text),
+                  "status": statusController.text,
+                });
+
+                Navigator.of(context).pop();
+                print("Booking $bookingId updated successfully!");
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 void _openEditDialog(BuildContext context, String bookingId) async {
   String roomId = selectedBookingData?["resource_id"];
+  String bookingType = selectedBookingData?["booking_type"];
   print(roomId);
+  print(bookingType);
+  DocumentSnapshot bookingSnapshot;
   try {
-    DocumentSnapshot bookingSnapshot = await FirebaseFirestore.instance
-        .collection("spaces")
-        .doc("hotdesks")
-        .collection("hotdesk_bookings")
-        .doc(roomId)
-        .get();
-
+    if (bookingType == ("Hotdesk")) {
+      bookingSnapshot = await FirebaseFirestore.instance
+          .collection("spaces")
+          .doc("hotdesks")
+          .collection("hotdesk_bookings")
+          .doc(roomId)
+          .get();
+    } else {
+      bookingSnapshot = await FirebaseFirestore.instance
+          .collection("spaces")
+          .doc("conference_rooms")
+          .collection("conference_rooms_bookings")
+          .doc(roomId)
+          .get();
+    }
+    print(bookingSnapshot);
     if (bookingSnapshot.exists) {
       Map<String, dynamic> bookingData =
           bookingSnapshot.data() as Map<String, dynamic>;
+      print(bookingData);
 
       // ignore: use_build_context_synchronously
-      _showEditDialog(context, bookingId, bookingData);
+      _showEditDialog(context, bookingId, bookingData, bookingType);
     } else {
       print("Booking not found.");
     }
