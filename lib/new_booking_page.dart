@@ -267,6 +267,11 @@ class _NewBookingPageState extends State<NewBookingPage> {
             String resourceId = 'room_${i + 1000}';
             String startTime = roomTimes[i]!['start']!;
             String endTime = roomTimes[i]!['end']!;
+            DateTime start = DateTime.parse("2024-01-01 $startTime:00");
+            DateTime end = DateTime.parse("2024-01-01 $endTime:00");
+
+            // Calculate the difference in minutes
+            int differenceInMinutes = end.difference(start).inMinutes;
 
             // Check if start time is before end time
             if (_timeToMinutes(startTime) >= _timeToMinutes(endTime)) {
@@ -295,7 +300,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
                 'start_time': startTime,
                 'end_time': endTime,
                 'status': 'pending',
-                'timeout': valTime,
+                'timeout': differenceInMinutes,
                 //'timestamp': timestamp,
                 'user_id': _userId,
                 'karma_points': val,
