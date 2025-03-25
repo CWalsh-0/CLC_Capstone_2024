@@ -18,80 +18,83 @@ class NewBookingPage extends StatefulWidget {
 }
 
 class _NewBookingPageState extends State<NewBookingPage> {
-  // Booking type selection
   String? selectedBookingType;
-
-  // Calendar selection
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   bool _showCalendar = false;
 
-  // Time slots and ranges
   final List<String> timeSlots = ['Morning', 'Afternoon', 'All Day'];
   final List<String> availableTimes = [
-    '9:00',
-    '9:30',
-    '10:00',
-    '10:30',
-    '11:00',
-    '11:30',
-    '12:00',
-    '12:30',
-    '13:00',
-    '13:30',
-    '14:00',
-    '14:30',
-    '15:00',
-    '15:30',
-    '16:00',
-    '16:30',
-    '17:00'
+    '9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+    '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
   ];
 
-  // Selected resources
   final Map<int, bool> selectedDesks = {};
+  final Map<int, bool> selectedRooms = {};
   final Map<int, Map<String, String?>> roomTimes = {};
   final Map<int, String> selectedDeskTimeSlots = {};
 
-  // Firestore reference
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // Loading state
   bool _isLoading = false;
-
-  // Form validation
   bool _hasSelection = false;
-
-  // User ID
   String _userId = "anonymous";
 
   @override
   void initState() {
     super.initState();
-    // Initialize selections
     for (int i = 0; i < 5; i++) {
       selectedDesks[i] = false;
     }
-
     for (int i = 0; i < 3; i++) {
-      roomTimes[i] = {
-        'start': null,
-        'end': null,
-      };
+      selectedRooms[i] = false;
+      roomTimes[i] = {'start': null, 'end': null};
     }
-
-    // Get current user
     _userId = FirebaseAuth.instance.currentUser?.uid ?? "anonymous";
   }
 
+  bool _isMorningSlotDisabled(DateTime selectedDay) {
+    final now = DateTime.now();
+    if (!isSameDay(selectedDay, now)) return false;
+    final currentHour = now.hour;
+    final currentMinute = now.minute;
+    final currentMinutes = currentHour * 60 + currentMinute;
+    return currentMinutes >= 12 * 60; // Disable Morning after 12 PM
+  }
+
+  bool _isTimeDisabled(String time, DateTime selectedDay) {
+    final now = DateTime.now();
+    if (!isSameDay(selectedDay, now)) return false;
+    final currentHour = now.hour;
+    final currentMinute = now.minute;
+    final currentMinutes = currentHour * 60 + currentMinute;
+    final timeMinutes = _timeToMinutes(time);
+    return timeMinutes <= currentMinutes;
+  }
+
+  Future<bool> _isAllDayDisabled(int deskIndex, DateTime selectedDay) async {
+    String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDay);
+    String resourceId = 'room_${deskIndex + 67890}';
+    
+    QuerySnapshot bookingQuery = await _firestore
+        .collection('bookings')
+        .where('resource_id', isEqualTo: resourceId)
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    for (var doc in bookingQuery.docs) {
+      String timeSlot = doc['time'];
+      if (timeSlot == 'Morning' || timeSlot == 'Afternoon') {
+        return true; // Disable All Day if Morning or Afternoon is booked
+      }
+    }
+    return false;
+  }
+
   Future<void> sendRestCall(Map<String, dynamic> jsonBody) async {
-    final url =
-        Uri.parse('https://algorithmmain-production.up.railway.app/book');
+    final url = Uri.parse('https://algorithmmain-production.up.railway.app/book');
     try {
       final response = await http.post(url,
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           body: jsonEncode(jsonBody));
       if (response.statusCode == 200) {
         print('Success: ${response.body}');
@@ -103,26 +106,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
     }
   }
 
-  void _onSubmit() {
-    // Code this later to be currently signed in user than some entered id
-    User? user = FirebaseAuth.instance.currentUser;
-    final jsonBody = {
-      'user_id': user?.uid,
-      'booking_type': "bookingType",
-      'time': "selectedDateTime",
-      'resource_id': "_resourceIdController.text",
-      'timeout': "_timeoutController.text",
-      'karma_points': 1200
-    };
-    sendRestCall(jsonBody);
-  }
-
-  // Check if user has made a valid selection
   void _validateSelections() {
     bool hasValid = false;
-
     if (selectedBookingType == 'desk') {
-      // Check if any desk is selected with a time slot
       for (int i = 0; i < 5; i++) {
         if (selectedDesks[i] == true && selectedDeskTimeSlots.containsKey(i)) {
           hasValid = true;
@@ -130,67 +116,50 @@ class _NewBookingPageState extends State<NewBookingPage> {
         }
       }
     } else if (selectedBookingType == 'room') {
-      // Check if any room has both start and end times
       for (int i = 0; i < 3; i++) {
-        if (roomTimes[i]!['start'] != null && roomTimes[i]!['end'] != null) {
+        if ((selectedRooms[i] ?? false) && 
+            roomTimes[i]!['start'] != null && 
+            roomTimes[i]!['end'] != null) {
           hasValid = true;
           break;
         }
       }
     }
-
     setState(() {
       _hasSelection = hasValid;
     });
   }
 
-  // Check if a resource is available for the selected day and time
   Future<bool> _checkAvailability(
       String resourceType, String resourceId, String timeSlot,
       {String? startTime, String? endTime}) async {
     try {
-      // Format date for the query
       String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
-
-      // Query existing bookings for this resource on this day
       QuerySnapshot bookingQuery = await _firestore
           .collection('bookings')
           .where('resource_id', isEqualTo: resourceId)
           .where('date', isEqualTo: formattedDate)
           .get();
 
-      if (bookingQuery.docs.isEmpty) {
-        print("No bookings found");
-        return true; // No bookings found, resource is available
-      }
+      if (bookingQuery.docs.isEmpty) return true;
 
-      // For desk bookings, check time slot conflicts
       if (resourceType == 'desk') {
         for (var doc in bookingQuery.docs) {
-          if (doc['time'] == timeSlot) {
-            return false; // Time slot already booked
-          }
+          if (doc['time'] == timeSlot) return false;
         }
         return true;
-      }
-      // For room bookings, check time range conflicts
-      else if (resourceType == 'room') {
-        // Convert times to comparable format (minutes since start of day)
+      } else if (resourceType == 'room') {
         int requestedStart = _timeToMinutes(startTime!);
         int requestedEnd = _timeToMinutes(endTime!);
-
         for (var doc in bookingQuery.docs) {
           int bookedStart = _timeToMinutes(doc['start_time']);
           int bookedEnd = _timeToMinutes(doc['end_time']);
-
-          // Check for overlap
           if (requestedStart < bookedEnd && requestedEnd > bookedStart) {
-            return false; // Time range conflict
+            return false;
           }
         }
         return true;
       }
-
       return false;
     } catch (e) {
       print('Error checking availability: $e');
@@ -198,38 +167,28 @@ class _NewBookingPageState extends State<NewBookingPage> {
     }
   }
 
-  // Convert time string to minutes for comparison
   int _timeToMinutes(String time) {
     List<String> parts = time.split(':');
     return int.parse(parts[0]) * 60 + int.parse(parts[1]);
   }
 
-  // Save booking to Firestore
   Future<void> _saveBooking() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Generate a unique booking ID
       String bookingId =
           'bk_${DateTime.now().millisecondsSinceEpoch}_${_userId.substring(0, Math.min(5, _userId.length))}';
       String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
-
-      // Generate timestamp
       Timestamp timestamp = Timestamp.now();
 
       if (selectedBookingType == 'desk') {
-        // Process desk bookings
         for (int i = 0; i < 2; i++) {
-          if (selectedDesks[i] == true &&
-              selectedDeskTimeSlots.containsKey(i)) {
+          if (selectedDesks[i] == true && selectedDeskTimeSlots.containsKey(i)) {
             String resourceId = 'room_${i + 67890}';
             String timeSlot = selectedDeskTimeSlots[i]!;
-
-            // Check availability before booking
-            bool isAvailable =
-                await _checkAvailability('desk', resourceId, timeSlot);
+            bool isAvailable = await _checkAvailability('desk', resourceId, timeSlot);
 
             var rnd = Math.Random();
             int val = 600 + rnd.nextInt(601);
@@ -237,63 +196,51 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
             if (isAvailable) {
               final jsonBody = {
-                ///'booking_id': bookingId,
                 'booking_type': 'Hotdesk',
                 'resource_id': resourceId,
                 'date': formattedDate,
                 'time': timeSlot,
                 'status': 'pending',
                 'timeout': valTime,
-                //'timestamp': timestamp,
                 'user_id': _userId,
                 'karma_points': val,
               };
               print(jsonBody);
               sendRestCall(jsonBody);
             } else {
-              // Show error for unavailable resource
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        'Desk ${i + 67890} is not available for the selected time')),
+                SnackBar(content: Text('Desk ${i + 67890} is not available for the selected time')),
               );
             }
           }
         }
       } else if (selectedBookingType == 'room') {
-        // Process room bookings
         for (int i = 0; i < 1; i++) {
-          if (roomTimes[i]!['start'] != null && roomTimes[i]!['end'] != null) {
+          if ((selectedRooms[i] ?? false) && 
+              roomTimes[i]!['start'] != null && 
+              roomTimes[i]!['end'] != null) {
             String resourceId = 'room_${i + 1000}';
             String startTime = roomTimes[i]!['start']!;
             String endTime = roomTimes[i]!['end']!;
             DateTime start = DateTime.parse("2024-01-01 $startTime:00");
             DateTime end = DateTime.parse("2024-01-01 $endTime:00");
-
-            // Calculate the difference in minutes
             int differenceInMinutes = end.difference(start).inMinutes;
 
-            // Check if start time is before end time
             if (_timeToMinutes(startTime) >= _timeToMinutes(endTime)) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        'End time must be after start time for Room ${i + 1}')),
+                SnackBar(content: Text('End time must be after start time for Room ${i + 1}')),
               );
               continue;
             }
 
-            // Check availability before booking
             bool isAvailable = await _checkAvailability('room', resourceId, '',
                 startTime: startTime, endTime: endTime);
 
             var rnd = Math.Random();
             int val = 600 + rnd.nextInt(601);
-            int valTime = 5 + rnd.nextInt(25);
 
             if (isAvailable) {
               final jsonBody = {
-                //'booking_id': bookingId,
                 'booking_type': 'Conference Room',
                 'resource_id': resourceId,
                 'date': formattedDate,
@@ -301,25 +248,20 @@ class _NewBookingPageState extends State<NewBookingPage> {
                 'end_time': endTime,
                 'status': 'pending',
                 'timeout': differenceInMinutes,
-                //'timestamp': timestamp,
                 'user_id': _userId,
                 'karma_points': val,
               };
               print(jsonBody);
               sendRestCall(jsonBody);
             } else {
-              // Show error for unavailable resource
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        'Room ${i + 1000} is not available for the selected time range')),
+                SnackBar(content: Text('Room ${i + 1000} is not available for the selected time range')),
               );
             }
           }
         }
       }
 
-      // Navigate back to home page
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking confirmed successfully!')),
@@ -351,7 +293,6 @@ class _NewBookingPageState extends State<NewBookingPage> {
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  // Header with back button
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
@@ -382,8 +323,6 @@ class _NewBookingPageState extends State<NewBookingPage> {
                       ],
                     ),
                   ),
-
-                  // Booking Type Buttons
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -393,7 +332,6 @@ class _NewBookingPageState extends State<NewBookingPage> {
                           onPressed: () {
                             setState(() {
                               selectedBookingType = 'desk';
-                              // Reset all selections
                               for (int i = 0; i < 5; i++) {
                                 selectedDesks[i] = false;
                               }
@@ -406,20 +344,13 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             backgroundColor: selectedBookingType == 'desk'
                                 ? const Color(0xFF1A47B8)
                                 : Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             'Hot-Desk Station',
                             style: GoogleFonts.poppins(
-                              color: selectedBookingType == 'desk'
-                                  ? Colors.white
-                                  : Colors.black,
+                              color: selectedBookingType == 'desk' ? Colors.white : Colors.black,
                               fontSize: 16,
                             ),
                           ),
@@ -429,12 +360,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
                           onPressed: () {
                             setState(() {
                               selectedBookingType = 'room';
-                              // Reset all room times
                               for (int i = 0; i < 3; i++) {
-                                roomTimes[i] = {
-                                  'start': null,
-                                  'end': null,
-                                };
+                                selectedRooms[i] = false;
+                                roomTimes[i] = {'start': null, 'end': null};
                               }
                               _showCalendar = true;
                               _validateSelections();
@@ -444,20 +372,13 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             backgroundColor: selectedBookingType == 'room'
                                 ? const Color(0xFF1A47B8)
                                 : Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             'Meeting Room',
                             style: GoogleFonts.poppins(
-                              color: selectedBookingType == 'room'
-                                  ? Colors.white
-                                  : Colors.black,
+                              color: selectedBookingType == 'room' ? Colors.white : Colors.black,
                               fontSize: 16,
                             ),
                           ),
@@ -465,8 +386,6 @@ class _NewBookingPageState extends State<NewBookingPage> {
                       ],
                     ),
                   ),
-
-                  // Calendar (visible after booking type selection)
                   if (_showCalendar) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -490,18 +409,14 @@ class _NewBookingPageState extends State<NewBookingPage> {
                           ),
                           TableCalendar(
                             firstDay: DateTime.now(),
-                            lastDay:
-                                DateTime.now().add(const Duration(days: 60)),
+                            lastDay: DateTime.now().add(const Duration(days: 60)),
                             focusedDay: _focusedDay,
                             calendarFormat: CalendarFormat.week,
-                            selectedDayPredicate: (day) {
-                              return isSameDay(_selectedDay, day);
-                            },
+                            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                             onDaySelected: (selectedDay, focusedDay) {
                               setState(() {
                                 _selectedDay = selectedDay;
                                 _focusedDay = focusedDay;
-                                // Reset selections when day changes
                                 if (selectedBookingType == 'desk') {
                                   for (int i = 0; i < 5; i++) {
                                     selectedDesks[i] = false;
@@ -509,10 +424,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                                   selectedDeskTimeSlots.clear();
                                 } else {
                                   for (int i = 0; i < 3; i++) {
-                                    roomTimes[i] = {
-                                      'start': null,
-                                      'end': null,
-                                    };
+                                    selectedRooms[i] = false;
+                                    roomTimes[i] = {'start': null, 'end': null};
                                   }
                                 }
                                 _validateSelections();
@@ -521,20 +434,12 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             headerStyle: HeaderStyle(
                               formatButtonVisible: false,
                               titleCentered: true,
-                              titleTextStyle: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              titleTextStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             calendarStyle: CalendarStyle(
-                              selectedDecoration: const BoxDecoration(
-                                color: Color(0xFF1A47B8),
-                                shape: BoxShape.circle,
-                              ),
+                              selectedDecoration: const BoxDecoration(color: Color(0xFF1A47B8), shape: BoxShape.circle),
                               todayDecoration: BoxDecoration(
-                                color: const Color(0xFF1A47B8).withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
+                                  color: const Color(0xFF1A47B8).withOpacity(0.3), shape: BoxShape.circle),
                             ),
                           ),
                         ],
@@ -542,8 +447,6 @@ class _NewBookingPageState extends State<NewBookingPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
-
-                  // Availability Table
                   if (selectedBookingType != null)
                     Expanded(
                       child: Container(
@@ -555,60 +458,37 @@ class _NewBookingPageState extends State<NewBookingPage> {
                         ),
                         child: Column(
                           children: [
-                            // Table Header
                             Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
                                 children: [
                                   Expanded(
-                                    flex: selectedBookingType == 'desk' ? 1 : 2,
+                                    flex: 1,
                                     child: Text(
-                                      selectedBookingType == 'desk'
-                                          ? 'Desk'
-                                          : 'Room',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      selectedBookingType == 'desk' ? 'Desk' : 'Room',
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                  if (selectedBookingType == 'desk') ...[
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        'Select',
-                                        style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      'Select',
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                                     ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'Duration',
-                                        style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      selectedBookingType == 'desk' ? 'Duration' : 'Time Range',
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                                     ),
-                                  ] else
-                                    Expanded(
-                                      flex: 3,
-                                      child: Text(
-                                        'Time Range',
-                                        style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-
-                            // Table Content
                             Expanded(
                               child: ListView.builder(
-                                itemCount:
-                                    selectedBookingType == 'desk' ? 2 : 2,
+                                itemCount: selectedBookingType == 'desk' ? 2 : 2,
                                 itemBuilder: (context, index) {
                                   if (selectedBookingType == 'desk') {
                                     return buildDeskRow(index);
@@ -622,28 +502,19 @@ class _NewBookingPageState extends State<NewBookingPage> {
                         ),
                       ),
                     ),
-
-                  // Confirm Button
                   if (selectedBookingType != null)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: ElevatedButton(
                         onPressed: _hasSelection ? _saveBooking : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _hasSelection
-                              ? const Color(0xFF1A47B8)
-                              : Colors.grey,
+                          backgroundColor: _hasSelection ? const Color(0xFF1A47B8) : Colors.grey,
                           minimumSize: const Size(200, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         child: Text(
                           'Confirm',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ),
@@ -654,11 +525,85 @@ class _NewBookingPageState extends State<NewBookingPage> {
   }
 
   Widget buildDeskRow(int index) {
+    return FutureBuilder<bool>(
+      future: _isAllDayDisabled(index, _selectedDay),
+      builder: (context, snapshot) {
+        final isAllDayDisabled = snapshot.data ?? false;
+        final isMorningDisabled = _isMorningSlotDisabled(_selectedDay);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'Desk ${index + 67890}',
+                      style: GoogleFonts.poppins(),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Checkbox(
+                      value: selectedDesks[index],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedDesks[index] = value ?? false;
+                          if (value == false) {
+                            selectedDeskTimeSlots.remove(index);
+                          }
+                          _validateSelections();
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButton<String>(
+                      value: selectedDeskTimeSlots[index],
+                      hint: Text('Select time', style: GoogleFonts.poppins(fontSize: 14)),
+                      underline: Container(height: 1, color: Colors.grey),
+                      isExpanded: true,
+                      onChanged: selectedDesks[index] == true
+                          ? (value) {
+                              setState(() {
+                                selectedDeskTimeSlots[index] = value!;
+                                _validateSelections();
+                              });
+                            }
+                          : null,
+                      items: timeSlots.map((String slot) {
+                        final isDisabled = (slot == 'Morning' && isMorningDisabled) ||
+                            (slot == 'All Day' && isAllDayDisabled);
+                        return DropdownMenuItem<String>(
+                          value: slot,
+                          enabled: !isDisabled,
+                          child: Text(
+                            slot,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: isDisabled ? Colors.grey : Colors.black,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildRoomRow(int index) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 8.0,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
         children: [
           Row(
@@ -666,20 +611,19 @@ class _NewBookingPageState extends State<NewBookingPage> {
               Expanded(
                 flex: 1,
                 child: Text(
-                  'Desk ${index + 67890}',
+                  'Room ${index + 1000}',
                   style: GoogleFonts.poppins(),
                 ),
               ),
               Expanded(
                 flex: 1,
                 child: Checkbox(
-                  value: selectedDesks[index],
+                  value: selectedRooms[index] ?? false,
                   onChanged: (value) {
                     setState(() {
-                      selectedDesks[index] = value ?? false;
-                      // Clear time slot if desk is deselected
+                      selectedRooms[index] = value ?? false;
                       if (value == false) {
-                        selectedDeskTimeSlots.remove(index);
+                        roomTimes[index] = {'start': null, 'end': null};
                       }
                       _validateSelections();
                     });
@@ -688,133 +632,69 @@ class _NewBookingPageState extends State<NewBookingPage> {
               ),
               Expanded(
                 flex: 2,
-                child: DropdownButton<String>(
-                  value: selectedDeskTimeSlots[index],
-                  hint: Text('Select time',
-                      style: GoogleFonts.poppins(fontSize: 14)),
-                  underline: Container(height: 1, color: Colors.grey),
-                  isExpanded: true,
-                  onChanged: selectedDesks[index] == true
-                      ? (value) {
-                          setState(() {
-                            selectedDeskTimeSlots[index] = value!;
-                            _validateSelections();
-                          });
-                        }
-                      : null,
-                  items: timeSlots.map((String slot) {
-                    return DropdownMenuItem<String>(
-                      value: slot,
-                      child:
-                          Text(slot, style: GoogleFonts.poppins(fontSize: 14)),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-          const Divider(),
-        ],
-      ),
-    );
-  }
-
-  Widget buildRoomRow(int index) {
-    // Function to validate time selection
-    bool isValidTimeSelection() {
-      if (roomTimes[index]!['start'] == null ||
-          roomTimes[index]!['end'] == null) {
-        return true; // Not both times selected yet
-      }
-
-      // Check if start time is before end time
-      int startMinutes = _timeToMinutes(roomTimes[index]!['start']!);
-      int endMinutes = _timeToMinutes(roomTimes[index]!['end']!);
-
-      return startMinutes < endMinutes;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 8.0,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Room ${index + 1000}',
-                  style: GoogleFonts.poppins(),
-                ),
-              ),
-              Expanded(
-                flex: 3,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Expanded(
-                      flex: 2,
-                      child: Container(
-                        alignment: Alignment.centerRight,
-                        child: DropdownButton<String>(
-                          value: roomTimes[index]!['start'],
-                          hint: Text('Start',
-                              style: GoogleFonts.poppins(fontSize: 14)),
-                          underline: Container(height: 1, color: Colors.grey),
-                          isExpanded: true,
-                          items: availableTimes.map((String time) {
-                            return DropdownMenuItem<String>(
-                              value: time,
-                              child: Text(time,
-                                  style: GoogleFonts.poppins(fontSize: 14)),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              roomTimes[index]!['start'] = newValue;
-                              _validateSelections();
-                            });
-                          },
-                        ),
+                      child: DropdownButton<String>(
+                        value: roomTimes[index]!['start'],
+                        hint: Text('Start', style: GoogleFonts.poppins(fontSize: 14)),
+                        underline: Container(height: 1, color: Colors.grey),
+                        isExpanded: true,
+                        onChanged: (selectedRooms[index] ?? false)
+                            ? (value) {
+                                setState(() {
+                                  roomTimes[index]!['start'] = value;
+                                  _validateSelections();
+                                });
+                              }
+                            : null,
+                        items: availableTimes.map((String time) {
+                          final isDisabled = _isTimeDisabled(time, _selectedDay);
+                          return DropdownMenuItem<String>(
+                            value: time,
+                            enabled: !isDisabled,
+                            child: Text(
+                              time,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: isDisabled ? Colors.grey : Colors.black,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
-                    SizedBox(
-                      width: 40,
-                      child: Center(
-                        child: Text(
-                          'to',
-                          style: GoogleFonts.poppins(),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      flex: 2,
-                      child: Container(
-                        alignment: Alignment.centerLeft,
-                        child: DropdownButton<String>(
-                          value: roomTimes[index]!['end'],
-                          hint: Text('End',
-                              style: GoogleFonts.poppins(fontSize: 14)),
-                          underline: Container(height: 1, color: Colors.grey),
-                          isExpanded: true,
-                          items: availableTimes.map((String time) {
-                            return DropdownMenuItem<String>(
-                              value: time,
-                              child: Text(time,
-                                  style: GoogleFonts.poppins(fontSize: 14)),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              roomTimes[index]!['end'] = newValue;
-                              _validateSelections();
-                            });
-                          },
-                        ),
+                      child: DropdownButton<String>(
+                        value: roomTimes[index]!['end'],
+                        hint: Text('End', style: GoogleFonts.poppins(fontSize: 14)),
+                        underline: Container(height: 1, color: Colors.grey),
+                        isExpanded: true,
+                        onChanged: (selectedRooms[index] ?? false)
+                            ? (value) {
+                                setState(() {
+                                  roomTimes[index]!['end'] = value;
+                                  _validateSelections();
+                                });
+                              }
+                            : null,
+                        items: availableTimes.map((String time) {
+                          final isDisabled = _isTimeDisabled(time, _selectedDay) ||
+                              (roomTimes[index]!['start'] != null &&
+                                  _timeToMinutes(time) <= _timeToMinutes(roomTimes[index]!['start']!));
+                          return DropdownMenuItem<String>(
+                            value: time,
+                            enabled: !isDisabled,
+                            child: Text(
+                              time,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: isDisabled ? Colors.grey : Colors.black,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
@@ -822,16 +702,14 @@ class _NewBookingPageState extends State<NewBookingPage> {
               ),
             ],
           ),
-          // Warning if invalid time selection
-          if (!isValidTimeSelection())
+          if (roomTimes[index]!['start'] != null &&
+              roomTimes[index]!['end'] != null &&
+              _timeToMinutes(roomTimes[index]!['start']!) >= _timeToMinutes(roomTimes[index]!['end']!))
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 'End time must be after start time',
-                style: GoogleFonts.poppins(
-                  color: Colors.red,
-                  fontSize: 12,
-                ),
+                style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
               ),
             ),
           const Divider(),
