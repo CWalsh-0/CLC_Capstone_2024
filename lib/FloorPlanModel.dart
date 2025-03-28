@@ -15,7 +15,7 @@ enum ResourceStatus {
 
 class FloorPlanModel extends StatefulWidget {
   final DateTime? selectedDate;
-  final String? userId; // Current user ID to identify "my bookings"
+  final String? userId; // Current user ID to identify user bookings only
 
   const FloorPlanModel({
     super.key,
@@ -33,11 +33,9 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
   bool isLoading = true;
   late DateTime _currentDate;
   
-  // Maps to store status of each resource
   Map<String, ResourceStatus> deskStatuses = {};
   Map<String, ResourceStatus> roomStatuses = {};
   
-  // Maps to store booking details for tooltips
   Map<String, Map<String, dynamic>> deskBookingDetails = {};
   Map<String, Map<String, dynamic>> roomBookingDetails = {};
 
@@ -48,23 +46,23 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
     _loadResourceStatuses();
   }
 
-  // Load booking data from Firestore
+  // Loading booking data from Firestore
   Future<void> _loadResourceStatuses() async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      // Format the selected date
+      // Date formatting
       String formattedDate = DateFormat('yyyy-MM-dd').format(_currentDate);
       
-      // Reset status maps
+      // Reseting status
       deskStatuses.clear();
       roomStatuses.clear();
       deskBookingDetails.clear();
       roomBookingDetails.clear();
       
-      // Initialize all resources as available
+      // Initialize all resources
       _initializeResourceStatuses();
       
       // Fetch all bookings for this date from the bookings collection
@@ -81,25 +79,23 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
         String bookingType = data['booking_type'] as String;
         String status = data['status'] as String;
         
-        // Only process approved bookings
         if (status != 'approved') continue;
         
         bool isMyBooking = userId == widget.userId;
         
-        // Process desk/hotdesk bookings
         if (bookingType.toLowerCase().contains('hotdesk') || resourceId.startsWith('room_6')) {
           if (resourceId.startsWith('room_6')) {
             // Hotdesk bookings with IDs like "room_67890"
             String deskId = resourceId;
             
-            // Only process desks for the current floor
+            // Current floor config
             if ((selectedFloor == '1st' && int.parse(deskId.split('_')[1]) >= 67890 && int.parse(deskId.split('_')[1]) < 67892) ||
                 (selectedFloor == '2nd' && int.parse(deskId.split('_')[1]) >= 67892)) {
               
               // Check time slot
               String timeSlot = data['time'] ?? 'All Day';
               
-              // Store full booking details for tooltip
+              // Storing full booking details
               deskBookingDetails[deskId] = {
                 'status': status,
                 'time': timeSlot,
@@ -108,7 +104,6 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
                 'duration': data['timeout'] ?? 0,
               };
               
-              // Set status based on ownership
               deskStatuses[deskId] = isMyBooking 
                   ? ResourceStatus.myBooking 
                   : ResourceStatus.booked;
@@ -118,7 +113,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
         // Process conference room bookings
         else if (bookingType.toLowerCase().contains('conference') || resourceId.startsWith('room_1')) {
           if (resourceId.startsWith('room_1')) {
-            // Room bookings with IDs like "room_1000"
+            // Room bookings IDs like "room_1000"
             String roomId = resourceId;
             
             // Only process rooms for the current floor
@@ -129,7 +124,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
               String startTime = data['start_time'] ?? '';
               String endTime = data['end_time'] ?? '';
               
-              // Store full booking details for tooltip
+              // Storing full booking details 
               roomBookingDetails[roomId] = {
                 'status': status,
                 'start_time': startTime,
@@ -138,8 +133,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
                 'date': formattedDate,
                 'duration': data['timeout'] ?? 0,
               };
-              
-              // Set status based on ownership
+
               roomStatuses[roomId] = isMyBooking 
                   ? ResourceStatus.myBooking 
                   : ResourceStatus.booked;
@@ -163,22 +157,16 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
   void _initializeResourceStatuses() {
     // Initialize desk statuses based on floor
     if (selectedFloor == '1st') {
-      // First floor desks (room_67890, room_67891)
       for (int i = 67890; i < 67892; i++) {
         deskStatuses['room_$i'] = ResourceStatus.available;
       }
-      
-      // First floor rooms (room_1000 to room_1004)
       for (int i = 1000; i < 1005; i++) {
         roomStatuses['room_$i'] = ResourceStatus.available;
       }
     } else {
-      // Second floor desks (room_67892+)
       for (int i = 67892; i < 67894; i++) {
         deskStatuses['room_$i'] = ResourceStatus.available;
       }
-      
-      // Second floor rooms (room_1005+)
       for (int i = 1005; i < 1010; i++) {
         roomStatuses['room_$i'] = ResourceStatus.available;
       }
@@ -263,7 +251,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
         : roomBookingDetails[resourceId];
         
     if (details == null) {
-      // If no booking, show available message
+      // If no booking, show available
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -348,7 +336,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
                     ),
                   ),
                   Spacer(),
-                  // Date picker with smaller size to fix overflow
+                  // Date 
                   GestureDetector(
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
@@ -483,7 +471,7 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
       onTap: () {
         setState(() {
           selectedFloor = floor;
-          _loadResourceStatuses(); // Reload statuses when floor changes
+          _loadResourceStatuses(); // to reload statuses when floor changes
         });
       },
       child: Container(
@@ -535,7 +523,6 @@ class _FloorPlanModelState extends State<FloorPlanModel> {
   }
 }
 
-// Custom painter for desk map
 class DeskMapPainter extends CustomPainter {
   final String floor;
   final Map<String, ResourceStatus> deskStatuses;
@@ -543,13 +530,11 @@ class DeskMapPainter extends CustomPainter {
   final Function(String) onTapResource;
   
   DeskMapPainter(this.floor, this.deskStatuses, this.deskBookingDetails, this.onTapResource);
-  
-  // Track clickable regions for hotspots
+
   final Map<String, Rect> clickableRegions = {};
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Clear previous clickable regions
     clickableRegions.clear();
     
     final paint = Paint()
@@ -559,19 +544,17 @@ class DeskMapPainter extends CustomPainter {
     final tablePaint = Paint()
       ..color = Colors.grey[400]!
       ..style = PaintingStyle.fill;
-    
-    // Center the drawing in the available space
+  
     double centerX = size.width / 2;
     
     // Table dimensions
     double tableWidth = 180;
     double tableHeight = 40;
-    double tableSpacing = 120; // Increased spacing between tables
+    double tableSpacing = 120; 
 
-    // First floor has 3 tables, second floor has 2 tables
-    int numTables = floor == '1st' ? 1 : 1; // Just display 1 table per floor for simplicity
+
+    int numTables = floor == '1st' ? 1 : 1;
     
-    // Calculate total height needed
     double totalHeight = numTables * (tableHeight + tableSpacing);
     double startY = (size.height - totalHeight) / 2;
 
@@ -579,13 +562,12 @@ class DeskMapPainter extends CustomPainter {
       double yOffset = startY + (i * (tableHeight + tableSpacing));
       double tableX = centerX - (tableWidth / 2);
       
-      // Draw table
       canvas.drawRect(
         Rect.fromLTWH(tableX, yOffset, tableWidth, tableHeight),
         tablePaint
       );
 
-      // Draw desks based on floor
+      // Desks based on floor
       int baseIndex = floor == '1st' ? 67890 : 67892;
       
       // Draw desks for the specified floor
@@ -674,29 +656,26 @@ class MeetingRoomMapPainter extends CustomPainter {
   
   MeetingRoomMapPainter(this.floor, this.roomStatuses, this.roomBookingDetails, this.onTapResource);
   
-  // Track clickable regions for hotspots
   final Map<String, Rect> clickableRegions = {};
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Clear previous clickable regions
     clickableRegions.clear();
     
     // Base room number based on floor
     final int baseRoomNum = floor == '1st' ? 1000 : 1005;
     
-    // Calculate available width to fit all rooms without overflow
-    double availableWidth = size.width - 32; // Account for padding
-    double roomWidth = min(170.0, availableWidth * 0.45); // Limit maximum size and make proportional
-    double roomHeight = roomWidth * 0.9; // Maintain aspect ratio
-    double horizontalGap = (availableWidth - (roomWidth * 2)) / 3; // Distribute remaining space
+    double availableWidth = size.width - 32; 
+    double roomWidth = min(170.0, availableWidth * 0.45); 
+    double roomHeight = roomWidth * 0.9; 
+    double horizontalGap = (availableWidth - (roomWidth * 2)) / 3; 
     
-    // Just display the first room for simplicity
+    // Display room
     int roomNumber = baseRoomNum;
     String roomId = 'room_$roomNumber';
     ResourceStatus status = roomStatuses[roomId] ?? ResourceStatus.available;
     
-    // Position room centered
+    // Room centered
     double xOffset = (size.width - roomWidth) / 2;
     double yOffset = 100;
     
@@ -710,7 +689,6 @@ class MeetingRoomMapPainter extends CustomPainter {
       roomHeight
     );
     
-    // Store clickable region
     clickableRegions[roomId] = Rect.fromLTWH(xOffset, yOffset, roomWidth, roomHeight);
   }
 
@@ -737,20 +715,18 @@ class MeetingRoomMapPainter extends CustomPainter {
       ..color = Colors.black
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-    
-    // Draw filled rectangle
+
     canvas.drawRect(
       Rect.fromLTWH(x, y, width, height),
       roomPaint
     );
-    
-    // Draw border
+
     canvas.drawRect(
       Rect.fromLTWH(x, y, width, height),
       borderPaint
     );
 
-    // Draw room name text using paragraph
+    // Room names
     final builder = ui.ParagraphBuilder(ui.ParagraphStyle(
       textAlign: ui.TextAlign.center,
       fontSize: 18,
@@ -762,14 +738,12 @@ class MeetingRoomMapPainter extends CustomPainter {
     final paragraph = builder.build()
       ..layout(ui.ParagraphConstraints(width: width));
     
-    // Position text at the top of the room, above the circles
+    // Position text
     canvas.drawParagraph(
       paragraph,
       Offset(x, y + 10)
     );
-    
-    // Draw capacity indicator
-    final capacityText = '6 people';
+    const capacityText = '6 people';
     
     final capacityBuilder = ui.ParagraphBuilder(ui.ParagraphStyle(
       textAlign: ui.TextAlign.center,
@@ -781,19 +755,18 @@ class MeetingRoomMapPainter extends CustomPainter {
     final capacityParagraph = capacityBuilder.build()
       ..layout(ui.ParagraphConstraints(width: width));
     
-    // Position capacity text at bottom of room
     canvas.drawParagraph(
       capacityParagraph,
       Offset(x, y + height - 30)
     );
     
-    // Draw chair circles
+    // Chair circles
     final chairPaint = Paint()
       ..color = Colors.grey[600]!
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
-    // Large room - 6 chairs in a grid pattern
+    // Large room - 6 chairs
     // Left column
     canvas.drawCircle(Offset(x + width * 0.3, y + height * 0.3), 10, chairPaint);
     canvas.drawCircle(Offset(x + width * 0.3, y + height * 0.5), 10, chairPaint);

@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Add white background
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -27,8 +27,9 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20), // Reduced top spacing
-                // Logo and FlexiDesk text in a row
+                const SizedBox(height: 20), 
+
+                // Logo and FlexiDesk text 
                 Row(
                   children: [
                     Image.asset(
@@ -52,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 25), // Add space after logo
+                const SizedBox(height: 25), 
 
                 const SizedBox(height: 0),
                 // Welcome Text
@@ -199,7 +200,6 @@ class _LoginPageState extends State<LoginPage> {
                 // Microsoft Sign In Button
                 OutlinedButton(
                   onPressed: () {
-                    // Implement Microsoft sign in
                   },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -220,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8), // Reduced spacing
+                const SizedBox(height: 8),
                 // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

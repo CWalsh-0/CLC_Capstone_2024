@@ -42,7 +42,6 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   void _onSubmit() {
-    // Code this later to be currently signed in user than some entered id
     User? user = FirebaseAuth.instance.currentUser;
     final jsonBody = {
       'user_id': user?.uid,
@@ -146,7 +145,6 @@ class _BookingPageState extends State<BookingPage> {
                 decoration: InputDecoration(
                   labelText: 'Resource ID',
                   border: OutlineInputBorder(
-                    // Add border around the TextField
                     borderRadius: BorderRadius.all(Radius.circular(8.0)),
                     borderSide: BorderSide(color: Colors.black, width: 2.0),
                   ),

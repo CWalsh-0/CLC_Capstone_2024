@@ -25,23 +25,23 @@ class SignupScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 10), // Reduced from 20
+                const SizedBox(height: 10), 
                 // Logo and FlexiDesk text in a row
                 Row(
                   children: [
                     Image.asset(
                       'assets/flexidesk_logo.png',
-                      height: 60, // Reduced from 80
-                      width: 60, // Reduced from 80
+                      height: 60, 
+                      width: 60, 
                     ),
-                    const SizedBox(width: 15), // Reduced from 20
+                    const SizedBox(width: 15), 
                     Padding(
-                      padding: const EdgeInsets.only(top: 95), // Reduced from 125
+                      padding: const EdgeInsets.only(top: 95), 
                       child: Center(
                         child: Text(
                           'FlexiDesk',
                           style: GoogleFonts.allura(
-                            fontSize: 40, // Reduced from 50
+                            fontSize: 40, 
                             color: const Color(0xFF1A47B8),
                             fontWeight: FontWeight.bold,
                           ),
@@ -50,17 +50,17 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 5), // Reduced from 25
+                const SizedBox(height: 5), 
                 
                 // Sign Up Text
                 Text(
                   'SIGN UP',
                   style: GoogleFonts.baloo2(
-                    fontSize: 24, // Reduced from 30
+                    fontSize: 24, 
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 2), // Reduced from 5
+                const SizedBox(height: 2), 
                 Text(
                   'Please enter your details below',
                   style: GoogleFonts.baloo2(
@@ -69,11 +69,11 @@ class SignupScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 5), // Reduced from 22
+                const SizedBox(height: 5), 
 
-                // Form Fields with reduced spacing
+                // Form Fields 
                 _buildInputField('First Name', 'Enter your first name', false, firstNameController),
-                const SizedBox(height: 5), // Reduced from 24
+                const SizedBox(height: 5), 
                 _buildInputField('Last Name', 'Enter your last name', false, lastNameController),
                 const SizedBox(height: 5),
                 _buildInputField('Email', 'Enter your email', false, emailController),
@@ -108,7 +108,7 @@ class SignupScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A47B8),
-                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 16
+                    padding: const EdgeInsets.symmetric(vertical: 12), 
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -122,7 +122,7 @@ class SignupScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 10), // Reduced from 24
+                const SizedBox(height: 10), 
                 
                 // Or Divider
                 const Row(
@@ -136,15 +136,14 @@ class SignupScreen extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 5), // Reduced from 24
+                const SizedBox(height: 5), 
 
                 // Microsoft Sign Up Button
                 OutlinedButton(
                   onPressed: () {
-                    // Implement Microsoft sign up
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12), // Reduced from 16
+                    padding: const EdgeInsets.symmetric(vertical: 12), 
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -200,7 +199,7 @@ class SignupScreen extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 6), // Reduced from 8
+        const SizedBox(height: 6), 
         TextFormField(
           controller: controller,
           obscureText: isPassword,
@@ -209,7 +208,7 @@ class SignupScreen extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // Reduced padding
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), 
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {

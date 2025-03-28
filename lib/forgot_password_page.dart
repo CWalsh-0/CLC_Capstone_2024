@@ -69,20 +69,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
             const SizedBox(height: 10),
               
-              // Logo and FlexiDesk text aligned at the top
+              // Logo and FlexiDesk text
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start, // Aligns items to the top
+                crossAxisAlignment: CrossAxisAlignment.start, 
                 children: [
-                  // FlexiDesk logo in the top left corner
                   Image.asset(
                     'assets/flexidesk_logo.png',
                     height: 80,
                     width: 80,
                   ),
-                  const SizedBox(width: 12), // Adjust spacing between logo and text
-                  // FlexiDesk text moved upwards
+                  const SizedBox(width: 12), 
                   Padding(
-                    padding: const EdgeInsets.only(top: 10), // Moves text up
+                    padding: const EdgeInsets.only(top: 10), 
                     child: Text(
                       'FlexiDesk',
                       style: GoogleFonts.allura(
@@ -94,7 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 40), // Adjust space before heading
+              const SizedBox(height: 40), 
               Text(
                 'FORGOT YOUR PASSWORD?',
                 style: GoogleFonts.poppins(

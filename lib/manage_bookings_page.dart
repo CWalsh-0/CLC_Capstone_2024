@@ -268,10 +268,8 @@ void _resetRoom(String bookingId, String bookingType) async {
           .get();
     }
     for (var doc in querySnapshot.docs) {
-      // we should probably keep the rooms and not generate them
-      //await doc.reference.delete();
       await doc.reference.update({
-        "date_booked": FieldValue.serverTimestamp(), // not an elegant reset
+        "date_booked": FieldValue.serverTimestamp(), 
         "is_booked": "false",
         "user_id": "empty",
         "time": "",

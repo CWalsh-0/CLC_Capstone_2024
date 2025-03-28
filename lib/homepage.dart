@@ -464,8 +464,7 @@ class _MyHomePageState extends State<MyHomePage> {
     double top = startIndex * 60.0;
     double height = (endIndex - startIndex) * 60.0;
     
-    // Increase minimum height to better accommodate content
-    if (height < 48) height = 48; // Adjusted from 40 to 48 to fit content
+    if (height < 48) height = 48; 
     
     String timeText = _getTimeDisplayText(booking);
     
@@ -486,20 +485,20 @@ class _MyHomePageState extends State<MyHomePage> {
             borderRadius: BorderRadius.circular(4),
             onTap: () => _showBookingDetails(booking),
             child: Padding(
-              padding: const EdgeInsets.all(4.0), // Reduced padding to save space
+              padding: const EdgeInsets.all(4.0), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Ensure the Column doesn't expand unnecessarily
+                mainAxisSize: MainAxisSize.min, 
                 children: [
                   Row(
                     children: [
-                      Icon(bookingIcon, size: 14, color: blockColor), // Reduced icon size
+                      Icon(bookingIcon, size: 14, color: blockColor), 
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           resourceName,
                           style: TextStyle(
-                            fontSize: 11, // Reduced font size
+                            fontSize: 11, 
                             fontWeight: FontWeight.w500,
                             color: blockColor.withOpacity(0.8),
                           ),
@@ -509,13 +508,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   // Only show time text if the block is tall enough
-                  if (timeText.isNotEmpty && height >= 60) // Adjusted threshold
+                  if (timeText.isNotEmpty && height >= 60) 
                     Padding(
-                      padding: const EdgeInsets.only(top: 2.0, left: 18.0), // Reduced padding
+                      padding: const EdgeInsets.only(top: 2.0, left: 18.0), 
                       child: Text(
                         timeText,
                         style: TextStyle(
-                          fontSize: 9, // Reduced font size
+                          fontSize: 9, 
                           color: blockColor.withOpacity(0.8),
                         ),
                         overflow: TextOverflow.ellipsis,
