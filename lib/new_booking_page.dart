@@ -25,8 +25,23 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
   final List<String> timeSlots = ['Morning', 'Afternoon', 'All Day'];
   final List<String> availableTimes = [
-    '9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
-    '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
+    '09:00',
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '12:00',
+    '12:30',
+    '13:00',
+    '13:30',
+    '14:00',
+    '14:30',
+    '15:00',
+    '15:30',
+    '16:00',
+    '16:30',
+    '17:00'
   ];
 
   final Map<int, bool> selectedDesks = {};
@@ -54,6 +69,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
   bool _isMorningSlotDisabled(DateTime selectedDay) {
     final now = DateTime.now();
+    //uncomment for debug
+    // final now = DateTime(
+    //    staticTime.year, staticTime.month, staticTime.day, 8, 0, 0); // 9:00 AM
     if (!isSameDay(selectedDay, now)) return false;
     final currentHour = now.hour;
     final currentMinute = now.minute;
@@ -63,6 +81,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
   bool _isTimeDisabled(String time, DateTime selectedDay) {
     final now = DateTime.now();
+    //uncomment for debug
+    //final now = DateTime(
+    //    staticTime.year, staticTime.month, staticTime.day, 8, 0, 0); // 9:00 AM
     if (!isSameDay(selectedDay, now)) return false;
     final currentHour = now.hour;
     final currentMinute = now.minute;
@@ -74,7 +95,7 @@ class _NewBookingPageState extends State<NewBookingPage> {
   Future<bool> _isAllDayDisabled(int deskIndex, DateTime selectedDay) async {
     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDay);
     String resourceId = 'room_${deskIndex + 67890}';
-    
+
     QuerySnapshot bookingQuery = await _firestore
         .collection('bookings')
         .where('resource_id', isEqualTo: resourceId)
@@ -91,7 +112,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
   }
 
   Future<void> sendRestCall(Map<String, dynamic> jsonBody) async {
-    final url = Uri.parse('https://algorithmmain-production.up.railway.app/book');
+    final url =
+        Uri.parse('https://algorithmmain-production.up.railway.app/book');
     try {
       final response = await http.post(url,
           headers: {'Content-Type': 'application/json'},
@@ -117,8 +139,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
       }
     } else if (selectedBookingType == 'room') {
       for (int i = 0; i < 3; i++) {
-        if ((selectedRooms[i] ?? false) && 
-            roomTimes[i]!['start'] != null && 
+        if ((selectedRooms[i] ?? false) &&
+            roomTimes[i]!['start'] != null &&
             roomTimes[i]!['end'] != null) {
           hasValid = true;
           break;
@@ -185,14 +207,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
       if (selectedBookingType == 'desk') {
         for (int i = 0; i < 2; i++) {
-          if (selectedDesks[i] == true && selectedDeskTimeSlots.containsKey(i)) {
+          if (selectedDesks[i] == true &&
+              selectedDeskTimeSlots.containsKey(i)) {
             String resourceId = 'room_${i + 67890}';
             String timeSlot = selectedDeskTimeSlots[i]!;
-            bool isAvailable = await _checkAvailability('desk', resourceId, timeSlot);
+            bool isAvailable =
+                await _checkAvailability('desk', resourceId, timeSlot);
 
             var rnd = Math.Random();
             int val = 600 + rnd.nextInt(601);
-            int valTime = 5 + rnd.nextInt(25);
+            //int valTime = 5 + rnd.nextInt(25);
+            int valTime = 30;
 
             if (isAvailable) {
               final jsonBody = {
@@ -209,15 +234,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
               sendRestCall(jsonBody);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Desk ${i + 67890} is not available for the selected time')),
+                SnackBar(
+                    content: Text(
+                        'Desk ${i + 67890} is not available for the selected time')),
               );
             }
           }
         }
       } else if (selectedBookingType == 'room') {
         for (int i = 0; i < 1; i++) {
-          if ((selectedRooms[i] ?? false) && 
-              roomTimes[i]!['start'] != null && 
+          if ((selectedRooms[i] ?? false) &&
+              roomTimes[i]!['start'] != null &&
               roomTimes[i]!['end'] != null) {
             String resourceId = 'room_${i + 1000}';
             String startTime = roomTimes[i]!['start']!;
@@ -228,7 +255,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
 
             if (_timeToMinutes(startTime) >= _timeToMinutes(endTime)) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('End time must be after start time for Room ${i + 1}')),
+                SnackBar(
+                    content: Text(
+                        'End time must be after start time for Room ${i + 1}')),
               );
               continue;
             }
@@ -255,7 +284,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
               sendRestCall(jsonBody);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Room ${i + 1000} is not available for the selected time range')),
+                SnackBar(
+                    content: Text(
+                        'Room ${i + 1000} is not available for the selected time range')),
               );
             }
           }
@@ -344,13 +375,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             backgroundColor: selectedBookingType == 'desk'
                                 ? const Color(0xFF1A47B8)
                                 : Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             'Hot-Desk Station',
                             style: GoogleFonts.poppins(
-                              color: selectedBookingType == 'desk' ? Colors.white : Colors.black,
+                              color: selectedBookingType == 'desk'
+                                  ? Colors.white
+                                  : Colors.black,
                               fontSize: 16,
                             ),
                           ),
@@ -372,13 +407,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             backgroundColor: selectedBookingType == 'room'
                                 ? const Color(0xFF1A47B8)
                                 : Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             'Meeting Room',
                             style: GoogleFonts.poppins(
-                              color: selectedBookingType == 'room' ? Colors.white : Colors.black,
+                              color: selectedBookingType == 'room'
+                                  ? Colors.white
+                                  : Colors.black,
                               fontSize: 16,
                             ),
                           ),
@@ -409,10 +448,12 @@ class _NewBookingPageState extends State<NewBookingPage> {
                           ),
                           TableCalendar(
                             firstDay: DateTime.now(),
-                            lastDay: DateTime.now().add(const Duration(days: 60)),
+                            lastDay:
+                                DateTime.now().add(const Duration(days: 60)),
                             focusedDay: _focusedDay,
                             calendarFormat: CalendarFormat.week,
-                            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                            selectedDayPredicate: (day) =>
+                                isSameDay(_selectedDay, day),
                             onDaySelected: (selectedDay, focusedDay) {
                               setState(() {
                                 _selectedDay = selectedDay;
@@ -434,12 +475,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             headerStyle: HeaderStyle(
                               formatButtonVisible: false,
                               titleCentered: true,
-                              titleTextStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                              titleTextStyle: GoogleFonts.poppins(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             calendarStyle: CalendarStyle(
-                              selectedDecoration: const BoxDecoration(color: Color(0xFF1A47B8), shape: BoxShape.circle),
+                              selectedDecoration: const BoxDecoration(
+                                  color: Color(0xFF1A47B8),
+                                  shape: BoxShape.circle),
                               todayDecoration: BoxDecoration(
-                                  color: const Color(0xFF1A47B8).withOpacity(0.3), shape: BoxShape.circle),
+                                  color:
+                                      const Color(0xFF1A47B8).withOpacity(0.3),
+                                  shape: BoxShape.circle),
                             ),
                           ),
                         ],
@@ -465,22 +511,29 @@ class _NewBookingPageState extends State<NewBookingPage> {
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      selectedBookingType == 'desk' ? 'Desk' : 'Room',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                                      selectedBookingType == 'desk'
+                                          ? 'Desk'
+                                          : 'Room',
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                   Expanded(
                                     flex: 1,
                                     child: Text(
                                       'Select',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                      selectedBookingType == 'desk' ? 'Duration' : 'Time Range',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                                      selectedBookingType == 'desk'
+                                          ? 'Duration'
+                                          : 'Time Range',
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                 ],
@@ -488,7 +541,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             ),
                             Expanded(
                               child: ListView.builder(
-                                itemCount: selectedBookingType == 'desk' ? 2 : 2,
+                                itemCount:
+                                    selectedBookingType == 'desk' ? 2 : 2,
                                 itemBuilder: (context, index) {
                                   if (selectedBookingType == 'desk') {
                                     return buildDeskRow(index);
@@ -508,13 +562,17 @@ class _NewBookingPageState extends State<NewBookingPage> {
                       child: ElevatedButton(
                         onPressed: _hasSelection ? _saveBooking : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _hasSelection ? const Color(0xFF1A47B8) : Colors.grey,
+                          backgroundColor: _hasSelection
+                              ? const Color(0xFF1A47B8)
+                              : Colors.grey,
                           minimumSize: const Size(200, 50),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
                         ),
                         child: Text(
                           'Confirm',
-                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+                          style: GoogleFonts.poppins(
+                              color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ),
@@ -563,7 +621,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                     flex: 2,
                     child: DropdownButton<String>(
                       value: selectedDeskTimeSlots[index],
-                      hint: Text('Select time', style: GoogleFonts.poppins(fontSize: 14)),
+                      hint: Text('Select time',
+                          style: GoogleFonts.poppins(fontSize: 14)),
                       underline: Container(height: 1, color: Colors.grey),
                       isExpanded: true,
                       onChanged: selectedDesks[index] == true
@@ -575,8 +634,9 @@ class _NewBookingPageState extends State<NewBookingPage> {
                             }
                           : null,
                       items: timeSlots.map((String slot) {
-                        final isDisabled = (slot == 'Morning' && isMorningDisabled) ||
-                            (slot == 'All Day' && isAllDayDisabled);
+                        final isDisabled =
+                            (slot == 'Morning' && isMorningDisabled) ||
+                                (slot == 'All Day' && isAllDayDisabled);
                         return DropdownMenuItem<String>(
                           value: slot,
                           enabled: !isDisabled,
@@ -637,7 +697,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                     Expanded(
                       child: DropdownButton<String>(
                         value: roomTimes[index]!['start'],
-                        hint: Text('Start', style: GoogleFonts.poppins(fontSize: 14)),
+                        hint: Text('Start',
+                            style: GoogleFonts.poppins(fontSize: 14)),
                         underline: Container(height: 1, color: Colors.grey),
                         isExpanded: true,
                         onChanged: (selectedRooms[index] ?? false)
@@ -649,7 +710,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                               }
                             : null,
                         items: availableTimes.map((String time) {
-                          final isDisabled = _isTimeDisabled(time, _selectedDay);
+                          final isDisabled =
+                              _isTimeDisabled(time, _selectedDay);
                           return DropdownMenuItem<String>(
                             value: time,
                             enabled: !isDisabled,
@@ -668,7 +730,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
                     Expanded(
                       child: DropdownButton<String>(
                         value: roomTimes[index]!['end'],
-                        hint: Text('End', style: GoogleFonts.poppins(fontSize: 14)),
+                        hint: Text('End',
+                            style: GoogleFonts.poppins(fontSize: 14)),
                         underline: Container(height: 1, color: Colors.grey),
                         isExpanded: true,
                         onChanged: (selectedRooms[index] ?? false)
@@ -680,9 +743,12 @@ class _NewBookingPageState extends State<NewBookingPage> {
                               }
                             : null,
                         items: availableTimes.map((String time) {
-                          final isDisabled = _isTimeDisabled(time, _selectedDay) ||
-                              (roomTimes[index]!['start'] != null &&
-                                  _timeToMinutes(time) <= _timeToMinutes(roomTimes[index]!['start']!));
+                          final isDisabled =
+                              _isTimeDisabled(time, _selectedDay) ||
+                                  (roomTimes[index]!['start'] != null &&
+                                      _timeToMinutes(time) <=
+                                          _timeToMinutes(
+                                              roomTimes[index]!['start']!));
                           return DropdownMenuItem<String>(
                             value: time,
                             enabled: !isDisabled,
@@ -704,7 +770,8 @@ class _NewBookingPageState extends State<NewBookingPage> {
           ),
           if (roomTimes[index]!['start'] != null &&
               roomTimes[index]!['end'] != null &&
-              _timeToMinutes(roomTimes[index]!['start']!) >= _timeToMinutes(roomTimes[index]!['end']!))
+              _timeToMinutes(roomTimes[index]!['start']!) >=
+                  _timeToMinutes(roomTimes[index]!['end']!))
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(

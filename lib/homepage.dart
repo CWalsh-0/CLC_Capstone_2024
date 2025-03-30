@@ -75,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       final bookingsSnapshot = await FirebaseFirestore.instance
           .collection('bookings')
-          .where('user_id', isEqualTo: userId)
+          //.where('user_id', isEqualTo: userId)
           .where('date', isEqualTo: formattedDate)
           .get();
 
@@ -186,11 +186,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Color _getBookingColor(String? bookingType) {
+  Color _getBookingColor(String? bookingType, String? userId) {
+    String? verifId = FirebaseAuth.instance.currentUser?.uid;
     if (bookingType == null) return const Color(0xFFFF9800);
-    if (bookingType.toLowerCase().contains('hotdesk')) {
+    if (bookingType.toLowerCase().contains('hotdesk') && userId == verifId) {
       return const Color(0xFF4CAF50);
-    } else if (bookingType.toLowerCase().contains('conference')) {
+    } else if (bookingType.toLowerCase().contains('conference') &&
+        userId == verifId) {
       return const Color(0xFF2196F3);
     }
     return const Color(0xFFFF9800);
@@ -525,7 +527,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildContinuousBookingBlock(Map<String, dynamic> booking) {
-    Color blockColor = _getBookingColor(booking['booking_type'] as String?);
+    Color blockColor = _getBookingColor(
+        booking['booking_type'] as String?, booking['user_id'] as String?);
     String resourceName = booking['resource_id'] as String? ?? 'Resource';
     bool isHotdesk = booking['booking_type'] != null &&
         (booking['booking_type'] as String).toLowerCase().contains('hotdesk');
@@ -657,6 +660,7 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildDetailRow('User Id:', booking['user_id'] as String? ?? ''),
               _buildDetailRow(
                   'Resource:', booking['resource_id'] as String? ?? ''),
               _buildDetailRow(
@@ -679,14 +683,15 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text('Close',
                   style: GoogleFonts.poppins(color: const Color(0xFF1A47B8))),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/manage-bookings');
-              },
-              child: Text('Manage',
-                  style: GoogleFonts.poppins(color: const Color(0xFF1A47B8))),
-            ),
+            if (booking['user_id'] == FirebaseAuth.instance.currentUser?.uid)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/manage-bookings');
+                },
+                child: Text('Manage',
+                    style: GoogleFonts.poppins(color: const Color(0xFF1A47B8))),
+              ),
           ],
         );
       },
